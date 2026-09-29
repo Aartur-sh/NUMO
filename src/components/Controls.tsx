@@ -48,9 +48,9 @@ export const Controls: React.FC<ControlsProps> = ({
 }) => {
   const t = translations[lang];
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [isDraggingTrack, setIsDraggingTrack] = useState(false);
+  const [_isDraggingTrack, setIsDraggingTrack] = useState(false);
 
-  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sliderTrackRef = useRef<HTMLDivElement>(null);
   const isDraggingVolumeRef = useRef(false);
@@ -346,10 +346,6 @@ export const Controls: React.FC<ControlsProps> = ({
                 } else {
                   handleVolumeButtonClick(e);
                 }
-              }}
-              onDoubleClick={() => {
-                onToggleMute();
-                resetAutoHideTimer();
               }}
               aria-label="Налаштування гучності"
               className="w-[60px] h-[60px] flex-shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 active:scale-95 transition-all z-20"

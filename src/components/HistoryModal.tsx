@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, History, Music, Clock, Disc } from 'lucide-react';
+import { X, Music, Clock, Disc } from 'lucide-react';
 import type { NowPlayingResponse } from '../types';
 import type { Language } from '../i18n';
 

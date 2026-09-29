@@ -46,6 +46,7 @@ export default function App() {
         const info = await checkForAppUpdate();
         if (info.hasUpdate) {
           setReleaseInfo(info);
+          setIsUpdateModalOpen(true);
         }
       } catch {
         // Silently ignore startup errors (offline, initial run, etc.)
@@ -74,18 +75,17 @@ export default function App() {
   useEffect(() => {
     if (remainingSeconds <= 0) return;
     const interval = setInterval(() => {
-      setRemainingSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          pause();
-          setSleepMinutes(0);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemainingSeconds((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [remainingSeconds, pause]);
+  }, [remainingSeconds > 0]);
+
+  useEffect(() => {
+    if (remainingSeconds === 0 && sleepMinutes > 0) {
+      pause();
+      setSleepMinutes(0);
+    }
+  }, [remainingSeconds, sleepMinutes, pause]);
 
   const startSleepTimer = (mins: number) => {
     setSleepMinutes(mins);
@@ -220,6 +220,10 @@ export default function App() {
         data={data}
         lang={lang}
         releaseInfo={releaseInfo}
+        onOpenUpdateModal={() => {
+          setIsInfoOpen(false);
+          setIsUpdateModalOpen(true);
+        }}
       />
 
       {/* GitHub Releases App Update Dialog */}

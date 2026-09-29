@@ -18,12 +18,12 @@ let nowPlayingCache: { data: any; timestamp: number } | null = null;
 const CACHE_TTL_MS = 8000; // 8 seconds cache
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // Proxy endpoint for nowplaying data
-app.get('/api/radio/nowplaying', async (req, res) => {
+app.get('/api/radio/nowplaying', async (_req, res) => {
   const now = Date.now();
   if (nowPlayingCache && now - nowPlayingCache.timestamp < CACHE_TTL_MS) {
     return res.json(nowPlayingCache.data);
@@ -130,7 +130,13 @@ app.get('/api/radio/art', async (req, res) => {
   }
 
   // Security check: only allow proxying from the station server
-  if (!artUrl.startsWith(AZURACAST_BASE) && !artUrl.startsWith('https://numo.pp.ua') && !artUrl.startsWith('http://144.24.190.71') && !artUrl.startsWith('http://193.122.11.33')) {
+  if (
+    !artUrl.startsWith(AZURACAST_BASE) &&
+    !artUrl.startsWith('https://numo.pp.ua') &&
+    !artUrl.startsWith('http://numo.pp.ua') &&
+    !artUrl.startsWith('http://144.24.190.71') &&
+    !artUrl.startsWith('http://193.122.11.33')
+  ) {
     return res.status(403).send('Forbidden art source');
   }
 
@@ -153,14 +159,14 @@ app.get('/api/radio/art', async (req, res) => {
 });
 
 // Explicitly serve sw.js with proper Service Worker headers
-app.get('/sw.js', (req, res) => {
+app.get('/sw.js', (_req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Service-Worker-Allowed', '/');
   res.sendFile(path.resolve(__dirname, 'public', 'sw.js'));
 });
 
 // Explicitly serve manifest.webmanifest and manifest.json with proper MIME type
-app.get(['/manifest.webmanifest', '/manifest.json'], (req, res) => {
+app.get(['/manifest.webmanifest', '/manifest.json'], (_req, res) => {
   res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
   res.sendFile(path.resolve(__dirname, 'public', 'manifest.webmanifest'));
 });
@@ -178,13 +184,13 @@ async function startServer() {
   } else {
     // Production: serve built static files
     app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[SOLO Radio Server] Running on http://0.0.0.0:${PORT} (env: ${process.env.NODE_ENV || 'development'})`);
+    console.log(`[NUMO Radio Server] Running on http://0.0.0.0:${PORT} (env: ${process.env.NODE_ENV || 'development'})`);
   });
 }
 

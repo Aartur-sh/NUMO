@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   Radio,
-  History,
-  Music,
   Sparkles,
   RefreshCw,
   CheckCircle2,
@@ -527,75 +525,77 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                     transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     className="overflow-hidden origin-top"
                   >
-                    <div
-                      className={`flex flex-col gap-2.5 p-3.5 rounded-2xl border text-white shadow-lg shadow-black/40 ${
+                    <button
+                      type="button"
+                      onClick={handleStartDownload}
+                      disabled={isDownloading}
+                      className={`w-full flex flex-col gap-2.5 p-3.5 rounded-2xl border text-white shadow-lg shadow-black/40 text-left transition-all active:scale-[0.98] select-none ${
+                        isDownloading
+                          ? 'cursor-default'
+                          : 'cursor-pointer hover:opacity-95'
+                      } ${
                         availableUpdate.isPrerelease
                           ? 'bg-gradient-to-br from-indigo-950/85 via-purple-950/75 to-violet-950/85 border-violet-500/50 shadow-violet-950/60'
                           : 'bg-gradient-to-br from-emerald-950/85 via-teal-950/75 to-cyan-950/85 border-emerald-500/45 shadow-emerald-950/60'
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        {/* Left: New version name */}
-                        <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center justify-between gap-3 w-full">
+                        {/* Left: New version title */}
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
                               availableUpdate.isPrerelease
                                 ? 'bg-violet-500/25 text-violet-300'
-                                : 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-emerald-500/20 text-emerald-300'
                             }`}
                           >
                             {availableUpdate.isPrerelease ? (
-                              <FlaskConical className="w-3.5 h-3.5" />
+                              <FlaskConical className="w-4 h-4" />
                             ) : (
-                              <Sparkles className="w-3.5 h-3.5" />
+                              <Sparkles className="w-4 h-4" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold truncate leading-none">
+                            <p className="text-xs font-bold truncate leading-snug">
                               {availableUpdate.isPrerelease ? (
-                                <span className="text-violet-300">
-                                  {lang === 'en' ? 'New Beta' : 'Нова бета-версія'}{' '}
-                                  <span className="font-mono">{availableUpdate.displayVersion}</span>
+                                <span className="text-violet-200">
+                                  {lang === 'en' ? 'New Beta Available' : 'Доступна нова бета-версія'}
                                 </span>
                               ) : (
                                 <span className="text-emerald-200">
-                                  {lang === 'en' ? 'New version' : 'Нова версія'}{' '}
-                                  <span className="font-mono">v{availableUpdate.latestVersion}</span>
+                                  {lang === 'en' ? 'New Version Available' : 'Доступна нова версія'}
                                 </span>
                               )}
                             </p>
                             <p
-                              className={`text-[10px] font-mono mt-1 leading-none ${
+                              className={`text-[11px] font-mono mt-0.5 font-bold ${
                                 availableUpdate.isPrerelease
-                                  ? 'text-violet-400/90'
-                                  : 'text-emerald-400/90'
+                                  ? 'text-violet-300'
+                                  : 'text-emerald-300'
                               }`}
                             >
-                              v{APP_VERSION} → {availableUpdate.displayVersion}
+                              {availableUpdate.displayVersion}
                             </p>
                           </div>
                         </div>
 
-                        {/* Right: Download Button */}
+                        {/* Right: Download icon cue */}
                         {!isDownloading && (
-                          <button
-                            type="button"
-                            onClick={handleStartDownload}
-                            className={`py-1.5 px-3 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer flex-shrink-0 ${
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md ${
                               availableUpdate.isPrerelease
-                                ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 text-white shadow-violet-500/30 hover:opacity-95'
-                                : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 text-slate-950 shadow-emerald-500/30 hover:opacity-95'
+                                ? 'bg-violet-500/30 text-violet-200 border border-violet-400/30'
+                                : 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/30'
                             }`}
                           >
-                            <ArrowDownCircle className="w-3.5 h-3.5 stroke-[2.5]" />
-                            <span>{lang === 'en' ? 'Download' : 'Завантажити'}</span>
-                          </button>
+                            <ArrowDownCircle className="w-4 h-4 stroke-[2.5]" />
+                          </div>
                         )}
                       </div>
 
                       {/* Status & Progress Bar during download */}
                       {isDownloading && (
-                        <div className="flex flex-col gap-1.5 pt-1">
+                        <div className="flex flex-col gap-1.5 pt-1 w-full">
                           <div
                             className={`flex items-center justify-between text-[11px] font-semibold ${
                               availableUpdate.isPrerelease ? 'text-violet-300' : 'text-emerald-300'
@@ -603,7 +603,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                           >
                             <span className="flex items-center gap-1.5 truncate">
                               <Loader2
-                                className={`w-3 h-3 animate-spin flex-shrink-0 ${
+                                className={`w-3.5 h-3.5 animate-spin flex-shrink-0 ${
                                   availableUpdate.isPrerelease
                                     ? 'text-violet-400'
                                     : 'text-emerald-400'
@@ -630,7 +630,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                           </div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -148,7 +148,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
     ? Math.min(100, Math.max(0, (elapsedSeconds / totalDuration) * 100))
     : 0;
 
-  const displayTitle = title || 'SOLO Radio';
+  const displayTitle = title || 'NUMO Radio';
 
   return (
     <div className="w-full flex flex-col items-center text-center mt-1 sm:mt-1.5 mb-0 px-0">
@@ -229,7 +229,7 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
           )}
         </div>
 
-        {/* Timers Row without blinking SOLO text */}
+        {/* Timers Row without blinking NUMO text */}
         <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 mt-1 px-0.5">
           <span>{totalDuration > 0 ? formatTime(elapsedSeconds) : '00:00'}</span>
           <span>
