@@ -44,9 +44,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-start px-4 pb-6 overflow-hidden"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-end px-4 overflow-hidden"
           style={{
-            paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 12px), 24px)',
+            paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 88px), 100px)',
           }}
         >
           {/* Smooth Backdrop */}
@@ -59,10 +59,10 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
             className="absolute inset-0 bg-black/80 backdrop-blur-md"
           />
 
-          {/* Modal Card */}
+          {/* Modal Card positioned immediately above History button */}
           <motion.div
             style={{
-              transformOrigin: '24px calc(100% - 24px)',
+              transformOrigin: '28px calc(100% - 10px)',
             }}
             initial={{ opacity: 0, scale: 0.15, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -71,22 +71,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
               duration: 0.36,
               ease: [0.05, 0.7, 0.1, 1.0],
             }}
-            className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700/60 p-5 sm:p-6 shadow-2xl shadow-black flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-white z-10 will-change-transform"
+            className="relative w-full max-w-md rounded-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-700/70 p-5 sm:p-6 shadow-2xl shadow-black flex flex-col gap-4 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto text-white z-10 will-change-transform"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 text-white font-bold">
-                  <History className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-base font-black text-white tracking-wide flex items-center gap-1.5">
-                    {lang === 'en' ? 'Track History' : 'Історія треків'}
-                  </h2>
-                  <p className="text-[11px] text-cyan-300/80 font-medium">
-                    {lang === 'en' ? 'Recently played on NUMO Radio' : 'Нещодавно в ефірі NUMO Radio'}
-                  </p>
-                </div>
+              <div>
+                <p className="text-xs text-cyan-300 font-semibold tracking-wide">
+                  {lang === 'en' ? 'Recently played on NUMO Radio' : 'Нещодавно в ефірі NUMO Radio'}
+                </p>
               </div>
               <button
                 type="button"

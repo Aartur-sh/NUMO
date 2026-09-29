@@ -57,7 +57,33 @@ export const Controls: React.FC<ControlsProps> = ({
 
   const effectiveVolume = isMuted ? 0 : volume;
   // Convert volume (0.0 - 1.0) to 10 discrete steps (0 to 10)
-  const currentStep = Math.round(effectiveVolume * 10);
+  const targetStep = Math.round(effectiveVolume * 10);
+  const [displayStep, setDisplayStep] = useState(targetStep);
+
+  // Smooth cascading step animation when muting/unmuting or when targetStep changes
+  useEffect(() => {
+    if (isDraggingVolumeRef.current) {
+      setDisplayStep(targetStep);
+      return;
+    }
+
+    if (displayStep === targetStep) return;
+
+    const timer = setInterval(() => {
+      setDisplayStep((prev) => {
+        if (prev < targetStep) {
+          return prev + 1;
+        } else if (prev > targetStep) {
+          return prev - 1;
+        } else {
+          clearInterval(timer);
+          return prev;
+        }
+      });
+    }, 25); // 25ms per notch = ~200-250ms for smooth fluid drop or rise
+
+    return () => clearInterval(timer);
+  }, [targetStep, displayStep]);
 
   // Reset or start the 5-second volume auto-hide countdown
   const resetAutoHideTimer = () => {
@@ -97,6 +123,7 @@ export const Controls: React.FC<ControlsProps> = ({
     const clamped = Math.max(0, Math.min(1, rawRatio));
     // Snap to 10 discrete levels
     const snapped = Math.round(clamped * 10) / 10;
+    setDisplayStep(Math.round(snapped * 10));
     onSetVolume(snapped);
   };
 
@@ -277,7 +304,7 @@ export const Controls: React.FC<ControlsProps> = ({
               >
                 {Array.from({ length: 10 }).map((_, idx) => {
                   const stepNum = idx + 1;
-                  const isActive = currentStep >= stepNum;
+                  const isActive = displayStep >= stepNum;
                   const notch = VOLUME_NOTCH_COLORS[idx];
                   return (
                     <div
@@ -299,7 +326,9 @@ export const Controls: React.FC<ControlsProps> = ({
                 step="0.1"
                 value={effectiveVolume}
                 onChange={(e) => {
-                  onSetVolume(parseFloat(e.target.value));
+                  const val = parseFloat(e.target.value);
+                  setDisplayStep(Math.round(val * 10));
+                  onSetVolume(val);
                   resetAutoHideTimer();
                 }}
                 aria-label="Гучність (10 рівнів)"
@@ -325,9 +354,9 @@ export const Controls: React.FC<ControlsProps> = ({
               aria-label="Налаштування гучності"
               className="w-[60px] h-[60px] flex-shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 active:scale-95 transition-all z-20"
             >
-              {effectiveVolume === 0 ? (
+              {displayStep === 0 ? (
                 <VolumeX className="w-6 h-6 text-red-300" />
-              ) : effectiveVolume < 0.5 ? (
+              ) : displayStep < 5 ? (
                 <Volume1 className="w-6 h-6 text-cyan-300" />
               ) : (
                 <Volume2 className="w-6 h-6 text-cyan-300" />

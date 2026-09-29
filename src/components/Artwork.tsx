@@ -178,19 +178,19 @@ const VinylTurntablePlayer: React.FC<{ isPlaying: boolean }> = ({ isPlaying }) =
           <div className="absolute inset-19 rounded-full border border-white/10" />
 
           {/* 
-            4. AUTHENTIC HANDWRITTEN SILVER MARKER "NUMO Radio" IN 2 BOLD LINES ON THE VINYL
+            4. AUTHENTIC HANDWRITTEN METALLIC MARKER INSCRIPTION ON THE VINYL
           */}
-          <div className="absolute top-[17%] left-1/2 transform -translate-x-1/2 -rotate-12 pointer-events-none select-none z-20 text-center">
+          <div className="absolute top-[17%] left-1/2 transform -translate-x-1/2 -rotate-[13deg] pointer-events-none select-none z-20 text-center">
             <div
-              className="text-cyan-200 text-2xl sm:text-3xl font-extrabold tracking-wider leading-none drop-shadow-[0_3px_10px_rgba(0,0,0,0.98)] opacity-95 flex flex-col items-center gap-0.5"
+              className="text-slate-100/95 font-bold tracking-wider leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.98)] flex flex-col items-center gap-0.5 select-none"
               style={{
-                fontFamily: "'Permanent Marker', 'Caveat', cursive, sans-serif",
-                textShadow: '0 0 12px rgba(34,211,238,0.9), 0 2px 6px rgba(0,0,0,0.98)',
-                letterSpacing: '0.08em',
+                fontFamily: "'Permanent Marker', 'Caveat', cursive",
+                letterSpacing: '0.06em',
+                filter: 'drop-shadow(0 0 2px rgba(34,211,238,0.7)) drop-shadow(0 3px 6px rgba(0,0,0,0.95))',
               }}
             >
-              <span>NUMO</span>
-              <span>Radio</span>
+              <span className="text-2xl sm:text-3xl text-cyan-200 transform -rotate-1 tracking-wider">NUMO</span>
+              <span className="text-xl sm:text-2xl text-sky-200/95 transform rotate-2 tracking-wide">Radio</span>
             </div>
           </div>
 

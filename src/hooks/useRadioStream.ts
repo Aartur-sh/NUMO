@@ -253,14 +253,44 @@ export function useRadioStream(currentSong?: Song) {
     }
   }, [isMuted]);
 
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const toggleMute = useCallback(() => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
     try {
       localStorage.setItem('numo_radio_muted', String(nextMuted));
     } catch {}
-    audioRef.current.volume = nextMuted ? 0 : volume;
+
+    if (!audio) return;
+
+    if (fadeIntervalRef.current) {
+      clearInterval(fadeIntervalRef.current);
+      fadeIntervalRef.current = null;
+    }
+
+    const startVol = audio.volume;
+    const targetVol = nextMuted ? 0 : volume;
+    const duration = 200; // 200ms smooth audio fade
+    const steps = 10;
+    const stepTime = duration / steps;
+    let stepCount = 0;
+
+    fadeIntervalRef.current = setInterval(() => {
+      stepCount++;
+      const progress = stepCount / steps;
+      const current = startVol + (targetVol - startVol) * progress;
+      audio.volume = Math.max(0, Math.min(1, current));
+
+      if (stepCount >= steps) {
+        if (fadeIntervalRef.current) {
+          clearInterval(fadeIntervalRef.current);
+          fadeIntervalRef.current = null;
+        }
+        audio.volume = targetVol;
+      }
+    }, stepTime);
   }, [isMuted, volume]);
 
   return {

@@ -1,4 +1,4 @@
-export const APP_VERSION = (import.meta as any).env?.VITE_APP_VERSION || '0.1.1';
+export const APP_VERSION = (import.meta as any).env?.VITE_APP_VERSION || '0.2.1';
 export const DEFAULT_GITHUB_REPO = 'Aartur-sh/NUMO';
 
 export interface AppReleaseInfo {

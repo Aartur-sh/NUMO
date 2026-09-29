@@ -12,6 +12,7 @@ import {
   ArrowDownCircle,
   Loader2,
   FlaskConical,
+  Heart,
 } from 'lucide-react';
 import type { NowPlayingResponse } from '../types';
 import type { Language } from '../i18n';
@@ -311,12 +312,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({
               </button>
             </div>
 
-            {/* Support Section */}
+            {/* Donate / Support Section */}
             <div className="flex flex-col gap-2 pt-0.5">
               <div>
-                <h3 className="text-xs font-bold text-slate-200 tracking-wide uppercase">
-                  {lang === 'en' ? 'Support' : 'Підтримати'}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-slate-200 tracking-wide uppercase">
+                    {lang === 'en' ? 'Donate' : 'Підтримати'}
+                  </h3>
+                  <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-500 animate-pulse inline-block flex-shrink-0" />
+                </div>
                 <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
                   {lang === 'en'
                     ? 'For project development and server & infrastructure maintenance'
@@ -398,10 +402,10 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 className={`relative w-full py-3 px-4 rounded-2xl border transition-all overflow-hidden flex items-center justify-between text-xs select-none touch-manipulation ${
                   isCheckingUpdate
                     ? isBetaChecking
-                      ? 'bg-purple-950/50 border-purple-400/80 shadow-[0_0_20px_rgba(168,85,247,0.4)] ring-1 ring-purple-400/60'
-                      : 'bg-cyan-950/40 border-cyan-400/70 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/50'
+                      ? 'bg-gradient-to-r from-indigo-950/90 via-purple-950/80 to-violet-950/90 border-violet-500/70 shadow-[0_0_20px_rgba(139,92,246,0.4)] ring-1 ring-violet-400/60'
+                      : 'bg-gradient-to-r from-emerald-950/80 via-teal-950/75 to-cyan-950/80 border-emerald-400/70 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50'
                     : isHolding
-                    ? 'bg-purple-950/30 border-purple-500/50 scale-[0.99]'
+                    ? 'bg-gradient-to-r from-indigo-950/50 via-purple-950/40 to-violet-950/50 border-violet-500/60 scale-[0.99]'
                     : inlineStatus !== null
                     ? 'bg-white/[0.04] border-white/10 opacity-75 cursor-default'
                     : 'bg-white/[0.05] hover:bg-white/[0.09] active:bg-white/[0.12] border-white/10 cursor-pointer'
@@ -410,7 +414,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 {/* 4-секундний індикатор утримання для бета-тесту */}
                 {isHolding && (
                   <div
-                    className="absolute left-0 bottom-0 top-0 bg-purple-500/25 pointer-events-none transition-all ease-linear"
+                    className="absolute left-0 bottom-0 top-0 bg-gradient-to-r from-violet-600/35 via-purple-500/35 to-indigo-500/35 pointer-events-none transition-all ease-linear"
                     style={{ width: `${holdProgress}%` }}
                   />
                 )}
@@ -422,8 +426,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                     transition={{ repeat: Infinity, duration: 1.1, ease: 'linear' }}
                     className={`absolute inset-0 pointer-events-none ${
                       isBetaChecking
-                        ? 'bg-gradient-to-r from-transparent via-purple-400/35 to-transparent'
-                        : 'bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent'
+                        ? 'bg-gradient-to-r from-transparent via-violet-400/35 to-transparent'
+                        : 'bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent'
                     }`}
                   />
                 )}
@@ -432,7 +436,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 {isCheckingUpdate && (
                   <div
                     className={`absolute inset-0 animate-pulse pointer-events-none ${
-                      isBetaChecking ? 'bg-purple-500/15' : 'bg-cyan-500/10'
+                      isBetaChecking ? 'bg-violet-500/15' : 'bg-emerald-500/10'
                     }`}
                   />
                 )}
@@ -440,12 +444,12 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 {/* Ліворуч: Версія додатку */}
                 <div className="relative z-10 flex items-center gap-2 min-w-0 leading-none">
                   {isBetaChecking ? (
-                    <FlaskConical className="w-4 h-4 text-purple-400 flex-shrink-0 animate-pulse" />
+                    <FlaskConical className="w-4 h-4 text-violet-300 flex-shrink-0 animate-pulse" />
                   ) : isCurrentBeta ? (
-                    <FlaskConical className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                    <FlaskConical className="w-4 h-4 text-violet-400 flex-shrink-0" />
                   ) : (
                     <Sparkles
-                      className={`w-4 h-4 text-cyan-400 flex-shrink-0 transition-transform ${
+                      className={`w-4 h-4 text-emerald-400 flex-shrink-0 transition-transform ${
                         isCheckingUpdate ? 'animate-spin' : ''
                       }`}
                     />
@@ -466,12 +470,12 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                   {isCheckingUpdate && (
                     <RefreshCw
                       className={`w-3.5 h-3.5 animate-spin ${
-                        isBetaChecking ? 'text-purple-300' : 'text-cyan-300'
+                        isBetaChecking ? 'text-violet-300' : 'text-emerald-300'
                       }`}
                     />
                   )}
                   {isCurrentBeta && (
-                    <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-300 border border-purple-500/40 tracking-wider">
+                    <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-violet-500/25 text-violet-300 border border-violet-500/40 tracking-wider">
                       beta
                     </span>
                   )}
@@ -494,14 +498,14 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                     <div
                       className={`flex items-center gap-2.5 p-3 rounded-2xl text-xs font-semibold shadow-lg shadow-black/40 ${
                         inlineStatus.type === 'beta'
-                          ? 'bg-purple-950/80 border border-purple-500/40 text-purple-300'
+                          ? 'bg-gradient-to-r from-indigo-950/90 via-purple-950/90 to-violet-950/90 border border-violet-500/40 text-violet-300'
                           : inlineStatus.type === 'success'
-                          ? 'bg-emerald-950/80 border border-emerald-500/40 text-emerald-300'
+                          ? 'bg-gradient-to-r from-emerald-950/90 via-teal-950/85 to-cyan-950/90 border border-emerald-500/40 text-emerald-300'
                           : 'bg-amber-950/80 border border-amber-500/40 text-amber-300'
                       }`}
                     >
                       {inlineStatus.type === 'beta' ? (
-                        <FlaskConical className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <FlaskConical className="w-4 h-4 text-violet-300 flex-shrink-0" />
                       ) : inlineStatus.type === 'success' ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                       ) : (
@@ -526,8 +530,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                     <div
                       className={`flex flex-col gap-2.5 p-3.5 rounded-2xl border text-white shadow-lg shadow-black/40 ${
                         availableUpdate.isPrerelease
-                          ? 'bg-purple-950/50 border-purple-500/40 shadow-purple-950/50'
-                          : 'bg-cyan-950/50 border-cyan-500/35'
+                          ? 'bg-gradient-to-br from-indigo-950/85 via-purple-950/75 to-violet-950/85 border-violet-500/50 shadow-violet-950/60'
+                          : 'bg-gradient-to-br from-emerald-950/85 via-teal-950/75 to-cyan-950/85 border-emerald-500/45 shadow-emerald-950/60'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -536,8 +540,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                           <div
                             className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
                               availableUpdate.isPrerelease
-                                ? 'bg-purple-500/25 text-purple-300'
-                                : 'bg-cyan-500/20 text-cyan-400'
+                                ? 'bg-violet-500/25 text-violet-300'
+                                : 'bg-emerald-500/20 text-emerald-400'
                             }`}
                           >
                             {availableUpdate.isPrerelease ? (
@@ -549,12 +553,12 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                           <div className="min-w-0">
                             <p className="text-xs font-bold truncate leading-none">
                               {availableUpdate.isPrerelease ? (
-                                <span className="text-purple-300">
+                                <span className="text-violet-300">
                                   {lang === 'en' ? 'New Beta' : 'Нова бета-версія'}{' '}
                                   <span className="font-mono">{availableUpdate.displayVersion}</span>
                                 </span>
                               ) : (
-                                <span className="text-cyan-200">
+                                <span className="text-emerald-200">
                                   {lang === 'en' ? 'New version' : 'Нова версія'}{' '}
                                   <span className="font-mono">v{availableUpdate.latestVersion}</span>
                                 </span>
@@ -563,8 +567,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                             <p
                               className={`text-[10px] font-mono mt-1 leading-none ${
                                 availableUpdate.isPrerelease
-                                  ? 'text-purple-400/80'
-                                  : 'text-cyan-400/80'
+                                  ? 'text-violet-400/90'
+                                  : 'text-emerald-400/90'
                               }`}
                             >
                               v{APP_VERSION} → {availableUpdate.displayVersion}
@@ -579,8 +583,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                             onClick={handleStartDownload}
                             className={`py-1.5 px-3 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer flex-shrink-0 ${
                               availableUpdate.isPrerelease
-                                ? 'bg-gradient-to-r from-purple-400 to-pink-500 text-slate-950 shadow-purple-500/20 hover:opacity-95'
-                                : 'bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-600 text-slate-950 shadow-cyan-500/20 hover:opacity-95'
+                                ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 text-white shadow-violet-500/30 hover:opacity-95'
+                                : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 text-slate-950 shadow-emerald-500/30 hover:opacity-95'
                             }`}
                           >
                             <ArrowDownCircle className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -594,15 +598,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                         <div className="flex flex-col gap-1.5 pt-1">
                           <div
                             className={`flex items-center justify-between text-[11px] font-semibold ${
-                              availableUpdate.isPrerelease ? 'text-purple-300' : 'text-cyan-300'
+                              availableUpdate.isPrerelease ? 'text-violet-300' : 'text-emerald-300'
                             }`}
                           >
                             <span className="flex items-center gap-1.5 truncate">
                               <Loader2
                                 className={`w-3 h-3 animate-spin flex-shrink-0 ${
                                   availableUpdate.isPrerelease
-                                    ? 'text-purple-400'
-                                    : 'text-cyan-400'
+                                    ? 'text-violet-400'
+                                    : 'text-emerald-400'
                                 }`}
                               />
                               {downloadStatusText}
@@ -618,8 +622,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                             <div
                               className={`h-full transition-all duration-200 ease-out ${
                                 availableUpdate.isPrerelease
-                                  ? 'bg-gradient-to-r from-purple-400 to-pink-500'
-                                  : 'bg-gradient-to-r from-cyan-400 to-indigo-500'
+                                  ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-400'
+                                  : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400'
                               }`}
                               style={{ width: `${downloadProgress ?? 10}%` }}
                             />
