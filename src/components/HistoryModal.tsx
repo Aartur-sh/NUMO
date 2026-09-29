@@ -61,11 +61,17 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
 
           {/* Modal Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: -12 }}
+            style={{
+              transformOrigin: '24px calc(100% - 24px)',
+            }}
+            initial={{ opacity: 0, scale: 0.15, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -12 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-md rounded-3xl bg-slate-900/95 border border-cyan-500/30 p-5 sm:p-6 shadow-2xl shadow-cyan-950/60 flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-white z-10"
+            exit={{ opacity: 0, scale: 0.15, y: 16 }}
+            transition={{
+              duration: 0.36,
+              ease: [0.05, 0.7, 0.1, 1.0],
+            }}
+            className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700/60 p-5 sm:p-6 shadow-2xl shadow-black flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-white z-10 will-change-transform"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">

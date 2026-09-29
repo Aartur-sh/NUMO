@@ -154,19 +154,16 @@ export const Controls: React.FC<ControlsProps> = ({
       {/* Main Controls Row with Absolute Center Alignment */}
       <div className="relative w-full flex items-center justify-between">
         
-        {/* Left Side: Symmetrical 60px Track History Button replacing old LIVE button */}
-        <div className="flex items-center justify-start w-[60px] flex-shrink-0 z-20">
+        {/* Left Side: Track History Button */}
+        <div className="flex items-center justify-start flex-shrink-0 z-20">
           <button
             type="button"
             onClick={onOpenHistory}
             aria-label="Історія треків"
             title="Переглянути історію ефіру"
-            className="w-[60px] h-[60px] rounded-2xl flex flex-col items-center justify-center backdrop-blur-xl border bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg transition-all active:scale-90 cursor-pointer select-none group"
+            className="w-[60px] h-[60px] rounded-2xl flex items-center justify-center backdrop-blur-xl border bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg transition-all active:scale-90 cursor-pointer select-none group"
           >
-            <ListMusic className="w-5 h-5 text-cyan-300 group-hover:text-cyan-200 transition-colors mb-0.5" />
-            <span className="text-[9px] font-extrabold tracking-wider uppercase text-cyan-300/80 leading-none">
-              {lang === 'en' ? 'HISTORY' : 'ІСТОРІЯ'}
-            </span>
+            <ListMusic className="w-5 h-5 text-cyan-300 group-hover:text-cyan-200 transition-colors" />
           </button>
         </div>
 
@@ -257,7 +254,11 @@ export const Controls: React.FC<ControlsProps> = ({
               ease: [0.16, 1, 0.3, 1],
             }}
             onPointerDown={handleSliderInteraction}
-            className="absolute bottom-0 right-0 z-50 flex flex-col items-center justify-end overflow-hidden backdrop-blur-2xl border rounded-2xl shadow-2xl shadow-black/80 w-[60px] text-white bg-white/15 border-white/20 select-none"
+            className={`absolute bottom-0 right-0 z-50 flex flex-col items-center justify-end overflow-hidden backdrop-blur-xl border rounded-2xl shadow-2xl shadow-black/80 w-[60px] select-none transition-colors ${
+              showVolumeSlider
+                ? 'bg-white/15 border-white/25 text-white'
+                : 'bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg'
+            }`}
           >
             {/* Upper 10-Level Discrete Slider Zone (Equal distance to top edge & speaker icon: 24px) */}
             <div
@@ -327,9 +328,9 @@ export const Controls: React.FC<ControlsProps> = ({
               {effectiveVolume === 0 ? (
                 <VolumeX className="w-6 h-6 text-red-300" />
               ) : effectiveVolume < 0.5 ? (
-                <Volume1 className="w-6 h-6 text-white/95" />
+                <Volume1 className="w-6 h-6 text-cyan-300" />
               ) : (
-                <Volume2 className="w-6 h-6 text-white/95" />
+                <Volume2 className="w-6 h-6 text-cyan-300" />
               )}
             </button>
           </motion.div>

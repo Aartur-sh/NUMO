@@ -46,7 +46,6 @@ export default function App() {
         const info = await checkForAppUpdate();
         if (info.hasUpdate) {
           setReleaseInfo(info);
-          setIsUpdateModalOpen(true);
         }
       } catch {
         // Silently ignore startup errors (offline, initial run, etc.)
@@ -133,6 +132,7 @@ export default function App() {
           sleepMinutes={sleepMinutes}
           remainingSeconds={remainingSeconds}
           onStartSleepTimer={startSleepTimer}
+          hasUpdate={!!releaseInfo?.hasUpdate}
         />
       </div>
 
@@ -219,10 +219,7 @@ export default function App() {
         onClose={() => setIsInfoOpen(false)}
         data={data}
         lang={lang}
-        onOpenUpdateModal={(info) => {
-          setReleaseInfo(info);
-          setIsUpdateModalOpen(true);
-        }}
+        releaseInfo={releaseInfo}
       />
 
       {/* GitHub Releases App Update Dialog */}

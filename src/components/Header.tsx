@@ -14,6 +14,7 @@ interface HeaderProps {
   sleepMinutes: number;
   remainingSeconds: number;
   onStartSleepTimer: (mins: number) => void;
+  hasUpdate?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   sleepMinutes,
   remainingSeconds,
   onStartSleepTimer,
+  hasUpdate,
 }) => {
   const [showListenersBadge, setShowListenersBadge] = useState(false);
   const [showSleepMenu, setShowSleepMenu] = useState(false);
@@ -257,9 +259,19 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onOpenInfo}
           type="button"
           aria-label="Інформація про радіо"
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white backdrop-blur-md border border-white/10 active:scale-90 transition-all shadow-sm cursor-pointer touch-manipulation z-30"
+          className={`relative flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-md border active:scale-90 transition-all shadow-sm cursor-pointer touch-manipulation z-30 ${
+            hasUpdate
+              ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.6)] animate-pulse'
+              : 'bg-white/10 hover:bg-white/15 text-slate-200 hover:text-white border-white/10'
+          }`}
         >
           <Info className="w-4 h-4" />
+          {hasUpdate && (
+            <>
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-cyan-400 animate-ping" />
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-cyan-400 border-2 border-slate-900" />
+            </>
+          )}
         </button>
       </div>
     </header>

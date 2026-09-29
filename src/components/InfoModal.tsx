@@ -29,6 +29,7 @@ interface InfoModalProps {
   data: NowPlayingResponse | null;
   lang: Language;
   onOpenUpdateModal?: (info: AppReleaseInfo) => void;
+  releaseInfo?: AppReleaseInfo | null;
 }
 
 export const InfoModal: React.FC<InfoModalProps> = ({
@@ -36,6 +37,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   onClose,
   data,
   lang,
+  releaseInfo,
 }) => {
   const t = translations[lang];
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -47,6 +49,12 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 
   // When an update is found, show the dedicated download row below the version
   const [availableUpdate, setAvailableUpdate] = useState<AppReleaseInfo | null>(null);
+
+  useEffect(() => {
+    if (isOpen && releaseInfo?.hasUpdate && !availableUpdate) {
+      setAvailableUpdate(releaseInfo);
+    }
+  }, [isOpen, releaseInfo]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [downloadStatusText, setDownloadStatusText] = useState<string>('');
