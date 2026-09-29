@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  * {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #070a12;
+  }
+}
+
+/* Fluid Slow Dynamic Gradient Animations (30-40s breathing cycles) */
+@keyframes meshShift {
+  0% {
+    transform: translate(0%, 0%) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(6%, -5%) scale(1.18) rotate(6deg);
+  }
+  66% {
+    transform: translate(-5%, 6%) scale(0.9) rotate(-5deg);
+  }
+  100% {
+    transform: translate(0%, 0%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes meshShiftReverse {
+  0% {
+    transform: translate(0%, 0%) scale(1.05) rotate(0deg);
+  }
+  33% {
+    transform: translate(-6%, 5%) scale(0.88) rotate(-7deg);
+  }
+  66% {
+    transform: translate(7%, -6%) scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: translate(0%, 0%) scale(1.05) rotate(0deg);
+  }
+}
+
+@keyframes meshFloatCenter {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 0.9;
+  }
+}
+
+.animate-mesh-1 {
+  animation: meshShift 28s ease-in-out infinite;
+}
+
+.animate-mesh-2 {
+  animation: meshShiftReverse 34s ease-in-out infinite;
+}
+
+.animate-mesh-center {
+  animation: meshFloatCenter 22s ease-in-out infinite;
+}
+
+/* Natural Multi-Keyframe Music Equalizer Movements (Slower, smoother, more organic) */
+@keyframes eqMove1 {
+  0% { height: 16%; }
+  25% { height: 68%; }
+  50% { height: 28%; }
+  75% { height: 82%; }
+  100% { height: 16%; }
+}
+
+@keyframes eqMove2 {
+  0% { height: 28%; }
+  20% { height: 42%; }
+  40% { height: 75%; }
+  65% { height: 22%; }
+  85% { height: 65%; }
+  100% { height: 28%; }
+}
+
+@keyframes eqMove3 {
+  0% { height: 35%; }
+  30% { height: 80%; }
+  55% { height: 20%; }
+  80% { height: 88%; }
+  100% { height: 35%; }
+}
+
+@keyframes eqMove4 {
+  0% { height: 20%; }
+  25% { height: 55%; }
+  50% { height: 32%; }
+  75% { height: 75%; }
+  100% { height: 20%; }
+}
+
+@keyframes eqMove5 {
+  0% { height: 32%; }
+  20% { height: 72%; }
+  45% { height: 40%; }
+  70% { height: 90%; }
+  100% { height: 32%; }
+}
+
+/* Smooth slow color morph for the entire equalizer across SOLO brand hues */
+/* Cyan (#22d3ee) -> Sky (#38bdf8) -> Indigo (#6366f1) -> Purple (#a855f7) -> Amber (#f59e0b) -> Cyan */
+@keyframes eqColorShift {
+  0% {
+    filter: hue-rotate(0deg) saturate(1.1);
+  }
+  50% {
+    filter: hue-rotate(45deg) saturate(1.25);
+  }
+  100% {
+    filter: hue-rotate(0deg) saturate(1.1);
+  }
+}
+
+.animate-eq-color-cycle {
+  animation: eqColorShift 16s ease-in-out infinite;
+}
+
+/* Animated Gradient Border for Artwork */
+@keyframes gradientBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-border {
+  animation: gradientBorder 6s ease infinite;
+}
+
+/* Custom slider style */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #38bdf8;
+  margin-top: -6px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+  transition: transform 0.15s ease;
+}
+
+/* Waving Ukrainian Flag Animation for NUM Wordmark */
+@keyframes ukraineFlagWave {
+  0% {
+    background-position: 0% 35%;
+  }
+  25% {
+    background-position: 45% 65%;
+  }
+  50% {
+    background-position: 100% 40%;
+  }
+  75% {
+    background-position: 55% 60%;
+  }
+  100% {
+    background-position: 0% 35%;
+  }
+}
+
+.ukraine-flag-text {
+  background: linear-gradient(
+    172deg,
+    #0057b7 0%,
+    #0077e6 38%,
+    #38bdf8 44%,
+    #facc15 54%,
+    #ffd700 62%,
+    #eab308 100%
+  );
+  background-size: 260% 260%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ukraineFlagWave 4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 2px 6px rgba(0, 87, 183, 0.45));
+}
+
+/* Organic Sine Wave Visualizer Keyframes */
+@keyframes waveFlow1 {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes waveFlow2 {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-wave-flow-1 {
+  animation: waveFlow1 9.5s linear infinite;
+}
+
+.animate-wave-flow-2 {
+  animation: waveFlow2 13.5s linear infinite;
+}
+
+/* Smooth Gentle Pendulum Wave for the Ukrainian Flag Sine Wave inside NUM wordmark */
+@keyframes flagWaveTranslate {
+  0% {
+    transform: translateX(-16px);
+  }
+  100% {
+    transform: translateX(16px);
+  }
+}
+
+.animate-flag-wave {
+  animation: flagWaveTranslate 7.5s ease-in-out infinite alternate;
+}
+

@@ -1,0 +1,483 @@
+name: Pre-release APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Generate Icons
+        run: bun run scripts/generate-icons.js
+
+      - name: Determine Version
+        id: versioning
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          VERSION_CODE=$(awk -v v="${VERSION}" 'BEGIN { gsub(/[^0-9.]/, "", v); split(v, a, "."); print (a[1]+0)*10000 + (a[2]+0)*100 + (a[3]+0) }')
+          {
+            echo "version=${VERSION}"
+            echo "version_code=${VERSION_CODE}"
+            echo "release_tag=v${VERSION}"
+          } >> "${GITHUB_OUTPUT}"
+          sed -i "s/export const APP_VERSION = .*/export const APP_VERSION = '${VERSION}';/" src/services/updateService.ts
+
+      - name: Build Web App
+        run: bun run build
+
+      - name: Install Capacitor Dependencies
+        run: bun add @capacitor/core @capacitor/cli @capacitor/android @capacitor/status-bar
+
+      - name: Create Capacitor Config
+        run: |
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.numoradio.app",
+            "appName": "NUMO Radio",
+            "webDir": "dist",
+            "server": { "cleartext": true },
+            "android": { "allowMixedContent": true },
+            "plugins": { "StatusBar": { "overlaysWebView": true } }
+          }
+          EOF
+
+      - name: Initialize Android Platform
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Apply Android Icons & Splash
+        run: bun run scripts/apply-android-assets.js
+
+      - name: Setup FileProvider Paths
+        run: |
+          mkdir -p android/app/src/main/res/xml
+          cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths>
+              <external-cache-path name="external_cache" path="." />
+              <cache-path name="cache" path="." />
+              <external-files-path name="external_files" path="." />
+              <files-path name="files" path="." />
+          </paths>
+          EOF
+
+      - name: Configure AndroidManifest
+        run: |
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+              <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:supportsRtl="true"
+                  android:theme="@style/AppTheme"
+                  android:usesCleartextTraffic="true">
+                  <activity
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+                      android:name=".MainActivity"
+                      android:label="@string/title_activity_main"
+                      android:theme="@style/AppTheme.NoActionBarLaunch"
+                      android:launchMode="singleTask"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/file_paths" />
+                  </provider>
+              </application>
+          </manifest>
+          EOF
+
+      - name: Configure MainActivity
+        run: |
+          cat << 'EOF' > android/app/src/main/java/com/numoradio/app/MainActivity.java
+          package com.numoradio.app;
+
+          import android.os.Bundle;
+          import android.view.View;
+          import android.view.Window;
+          import android.view.WindowManager;
+          import android.webkit.WebSettings;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(AppUpdatePlugin.class);
+                  super.onCreate(savedInstanceState);
+                  hideSystemUI();
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus) {
+                      hideSystemUI();
+                  }
+              }
+
+              @Override
+              public void onResume() {
+                  super.onResume();
+                  hideSystemUI();
+              }
+
+              private void hideSystemUI() {
+                  try {
+                      Window window = getWindow();
+                      window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                      window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+
+                      View decorView = window.getDecorView();
+                      decorView.setSystemUiVisibility(
+                          View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                          | View.SYSTEM_UI_FLAG_FULLSCREEN
+                          | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                          | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                          | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                          | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                      );
+
+                      WindowCompat.setDecorFitsSystemWindows(window, false);
+                      WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decorView);
+                      if (controller != null) {
+                          controller.hide(WindowInsetsCompat.Type.systemBars());
+                          controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                      }
+                  } catch (Exception ignored) {}
+              }
+
+              @Override
+              public void onStart() {
+                  super.onStart();
+                  hideSystemUI();
+                  if (bridge != null && bridge.getWebView() != null) {
+                      WebSettings settings = bridge.getWebView().getSettings();
+                      settings.setMediaPlaybackRequiresUserGesture(false);
+                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                      settings.setAllowContentAccess(true);
+                      settings.setAllowFileAccess(true);
+                  }
+              }
+          }
+          EOF
+
+      - name: Configure AppUpdatePlugin
+        run: |
+          cat << 'EOF' > android/app/src/main/java/com/numoradio/app/AppUpdatePlugin.java
+          package com.numoradio.app;
+
+          import android.content.Context;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.provider.Settings;
+          import androidx.core.content.FileProvider;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.InputStream;
+          import java.net.HttpURLConnection;
+          import java.net.URL;
+
+          @CapacitorPlugin(name = "AppUpdate")
+          public class AppUpdatePlugin extends Plugin {
+
+              @PluginMethod
+              public void canInstall(PluginCall call) {
+                  JSObject ret = new JSObject();
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      boolean can = getContext().getPackageManager().canRequestPackageInstalls();
+                      ret.put("canInstall", can);
+                  } else {
+                      ret.put("canInstall", true);
+                  }
+                  call.resolve(ret);
+              }
+
+              @PluginMethod
+              public void openInstallSettings(PluginCall call) {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                      intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      getContext().startActivity(intent);
+                  }
+                  call.resolve();
+              }
+
+              @PluginMethod
+              public void getAppVersion(PluginCall call) {
+                  try {
+                      android.content.pm.PackageInfo pInfo = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
+                      JSObject ret = new JSObject();
+                      ret.put("version", pInfo.versionName);
+                      call.resolve(ret);
+                  } catch (Exception e) {
+                      call.reject("Could not get version: " + e.getMessage());
+                  }
+              }
+
+              @PluginMethod
+              public void openExternalUrl(PluginCall call) {
+                  String url = call.getString("url");
+                  if (url == null || url.isEmpty()) {
+                      call.reject("URL is missing");
+                      return;
+                  }
+
+                  try {
+                      Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      getContext().startActivity(intent);
+                      call.resolve();
+                  } catch (Exception e) {
+                      call.reject("Cannot open URL: " + e.getMessage());
+                  }
+              }
+
+              @PluginMethod
+              public void downloadAndInstall(PluginCall call) {
+                  String downloadUrl = call.getString("url");
+                  String version = call.getString("version", "latest");
+
+                  if (downloadUrl == null || downloadUrl.isEmpty()) {
+                      call.reject("URL is missing");
+                      return;
+                  }
+
+                  new Thread(() -> {
+                      try {
+                          URL url = new URL(downloadUrl);
+                          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                          conn.setInstanceFollowRedirects(true);
+                          conn.setRequestProperty("User-Agent", "NUMO-Radio-App");
+                          conn.connect();
+
+                          int responseCode = conn.getResponseCode();
+                          while (responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
+                                 responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                                 responseCode == 307 || responseCode == 308) {
+                              String redirectUrl = conn.getHeaderField("Location");
+                              conn.disconnect();
+                              url = new URL(redirectUrl);
+                              conn = (HttpURLConnection) url.openConnection();
+                              conn.setRequestProperty("User-Agent", "NUMO-Radio-App");
+                              conn.connect();
+                              responseCode = conn.getResponseCode();
+                          }
+
+                          if (responseCode != HttpURLConnection.HTTP_OK) {
+                              throw new Exception("HTTP server error code: " + responseCode);
+                          }
+
+                          int fileLength = conn.getContentLength();
+                          File cacheDir = getContext().getExternalCacheDir();
+                          if (cacheDir == null) {
+                              cacheDir = getContext().getCacheDir();
+                          }
+                          File apkFile = new File(cacheDir, "numo_update_" + version + ".apk");
+                          if (apkFile.exists()) {
+                              apkFile.delete();
+                          }
+
+                          InputStream in = conn.getInputStream();
+                          FileOutputStream out = new FileOutputStream(apkFile);
+
+                          byte[] buffer = new byte[8192];
+                          long total = 0;
+                          int count;
+                          long lastNotifyTime = 0;
+
+                          while ((count = in.read(buffer)) != -1) {
+                              total += count;
+                              out.write(buffer, 0, count);
+
+                              long now = System.currentTimeMillis();
+                              if (fileLength > 0 && (now - lastNotifyTime > 150)) {
+                                  lastNotifyTime = now;
+                                  int progress = (int) (total * 100 / fileLength);
+                                  JSObject progressData = new JSObject();
+                                  progressData.put("progress", progress);
+                                  progressData.put("downloaded", total);
+                                  progressData.put("total", fileLength);
+                                  notifyListeners("downloadProgress", progressData);
+                              }
+                          }
+
+                          out.flush();
+                          out.close();
+                          in.close();
+                          conn.disconnect();
+
+                          JSObject finalProgress = new JSObject();
+                          finalProgress.put("progress", 100);
+                          finalProgress.put("downloaded", total);
+                          finalProgress.put("total", total);
+                          notifyListeners("downloadProgress", finalProgress);
+
+                          new Handler(Looper.getMainLooper()).post(() -> {
+                              try {
+                                  Uri apkUri = FileProvider.getUriForFile(
+                                      getContext(),
+                                      getContext().getPackageName() + ".fileprovider",
+                                      apkFile
+                                  );
+
+                                  Intent installIntent = new Intent(Intent.ACTION_VIEW);
+                                  installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                                  installIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                  installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                  getContext().startActivity(installIntent);
+
+                                  JSObject ret = new JSObject();
+                                  ret.put("success", true);
+                                  call.resolve(ret);
+                              } catch (Exception e) {
+                                  call.reject("Launch installer failed: " + e.getMessage());
+                              }
+                          });
+
+                      } catch (Exception e) {
+                          new Handler(Looper.getMainLooper()).post(() -> {
+                              call.reject("Download failed: " + e.getMessage());
+                          });
+                      }
+                  }).start();
+              }
+          }
+          EOF
+
+      - name: Setup Release Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          echo "$KEYSTORE_BASE64" | base64 -d > ~/.android/numo_release.keystore
+          chmod 600 ~/.android/numo_release.keystore
+
+      - name: Verify Keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          ls -l ~/.android/numo_release.keystore
+          keytool -list -keystore ~/.android/numo_release.keystore \
+            -storepass "$KEYSTORE_PASSWORD" -alias numoradio
+
+      - name: Apply Version & Signing to Gradle
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ steps.versioning.outputs.version_code }}/g" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"${{ steps.versioning.outputs.version }}\"/g" android/app/build.gradle
+
+          python3 -c '
+          with open("android/app/build.gradle", "r") as f:
+              content = f.read()
+
+          signing_block = """
+              signingConfigs {
+                  release {
+                      storeFile file(System.getProperty("user.home") + "/.android/numo_release.keystore")
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias "numoradio"
+                      keyPassword System.getenv("KEYSTORE_PASSWORD")
+                      v1SigningEnabled true
+                      v2SigningEnabled true
+                      enableV3Signing true
+                      enableV4Signing true
+                  }
+              }
+          """
+          content = content.replace("buildTypes {", signing_block + "\n    buildTypes {")
+          content = content.replace("buildTypes {\n        release {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release")
+          with open("android/app/build.gradle", "w") as f:
+              f.write(content)
+          '
+
+      - name: Build Signed Release APK
+        working-directory: ./android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Prepare APK
+        id: rename
+        run: |
+          APK_FILE="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK_FILE" ]; then
+            APK_FILE=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          fi
+          NEW_NAME="NUMO_${{ steps.versioning.outputs.version }}.apk"
+          cp "$APK_FILE" "$NEW_NAME"
+          echo "apk_name=${NEW_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Delete existing release with the same version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete "${{ steps.versioning.outputs.release_tag }}" --cleanup-tag --yes || true
+
+      - name: Create Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.rename.outputs.apk_name }}
+          tag_name: ${{ steps.versioning.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          name: NUMO Radio v${{ steps.versioning.outputs.version }}
+          prerelease: true
+          make_latest: false

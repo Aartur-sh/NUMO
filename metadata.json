@@ -1,0 +1,6 @@
+{
+  "name": "NUMO Radio",
+  "description": "Онлайн радіо NUMO — виразне звучання, свіжі хіти та улюблена музика.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
