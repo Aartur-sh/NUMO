@@ -336,7 +336,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
           <div className="relative w-full h-full rounded-[28px] sm:rounded-[34px] overflow-hidden bg-slate-900 flex items-center justify-center">
             
             {/* View Switching Transition between Cover Art and Vinyl Player */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {viewMode === 'cover' ? (
                 <motion.div
                   key="cover-view"
@@ -430,7 +430,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                   /* 1. Refined 28-Band Studio Spectrum Rods */
                   <motion.div
                     key="spectrum"
-                    initial={{ opacity: 0, y: 3 }}
+                    initial={false}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 3 }}
                     transition={{ duration: 0.2 }}
@@ -442,7 +442,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                         className="flex-1 flex flex-col justify-end items-center h-full"
                       >
                         <div
-                          className={`w-full rounded-t-sm transition-all bg-gradient-to-t ${bar.bg}`}
+                          className={`w-full rounded-t-sm transition-[opacity,box-shadow] bg-gradient-to-t ${bar.bg}`}
                           style={{
                             height: isPlaying ? undefined : '14%',
                             opacity: isPlaying ? 0.95 : 0.35,
@@ -461,7 +461,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                   /* 2. Edge-to-Edge Dual Neon Laser Oscilloscope */
                   <motion.div
                     key="laser"
-                    initial={{ opacity: 0, y: 3 }}
+                    initial={false}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 3 }}
                     transition={{ duration: 0.2 }}
@@ -473,7 +473,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                   /* 3. OFF state - subtle dot cue on hover */
                   <motion.div
                     key="off"
-                    initial={{ opacity: 0 }}
+                    initial={false}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="w-full h-full flex items-center justify-center opacity-0 hover:opacity-60 transition-opacity"

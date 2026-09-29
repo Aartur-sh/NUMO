@@ -68,31 +68,33 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
                   <defs>
                     <linearGradient id="splashCyan" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#38BDF8" />
-                      <stop offset="100%" stopColor="#0057B7" />
+                      <stop offset="50%" stopColor="#0284C7" />
+                      <stop offset="100%" stopColor="#0369A1" />
                     </linearGradient>
-                    <linearGradient id="splashGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FDE047" />
-                      <stop offset="50%" stopColor="#EAB308" />
-                      <stop offset="100%" stopColor="#CA8A04" />
+                    <linearGradient id="splashViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#C084FC" />
+                      <stop offset="50%" stopColor="#818CF8" />
+                      <stop offset="100%" stopColor="#4F46E5" />
                     </linearGradient>
                     <linearGradient id="splashWave" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#38BDF8" />
-                      <stop offset="50%" stopColor="#0057B7" />
-                      <stop offset="100%" stopColor="#FDE047" />
+                      <stop offset="35%" stopColor="#0284C7" />
+                      <stop offset="70%" stopColor="#818CF8" />
+                      <stop offset="100%" stopColor="#C084FC" />
                     </linearGradient>
                     <linearGradient id="splashVinyl" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#38BDF8" />
                       <stop offset="50%" stopColor="#818CF8" />
-                      <stop offset="100%" stopColor="#FACC15" />
+                      <stop offset="100%" stopColor="#C084FC" />
                     </linearGradient>
                   </defs>
 
                   {/* Equalizer Frequency Background Bars */}
-                  <g opacity="0.3">
+                  <g opacity="0.35">
                     <rect x="72" y="210" width="6" height="92" rx="3" fill="#38BDF8" />
                     <rect x="86" y="170" width="6" height="172" rx="3" fill="#38BDF8" />
-                    <rect x="420" y="170" width="6" height="172" rx="3" fill="#FACC15" />
-                    <rect x="434" y="210" width="6" height="92" rx="3" fill="#FACC15" />
+                    <rect x="420" y="170" width="6" height="172" rx="3" fill="#C084FC" />
+                    <rect x="434" y="210" width="6" height="92" rx="3" fill="#C084FC" />
                   </g>
 
                   {/* 1. 'U' Base Curve */}
@@ -108,14 +110,14 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
                     fill="url(#splashCyan)"
                   />
 
-                  {/* 3. 'M' Right Pillar & Eighth Note Flag */}
+                  {/* 3. 'N' Right Pillar & Eighth Note Flag */}
                   <path
                     d="M 292 136 C 292 116 308 100 328 100 C 348 100 364 116 364 136 L 364 372 C 364 392 348 408 328 408 C 308 408 292 392 292 372 Z"
-                    fill="url(#splashGold)"
+                    fill="url(#splashViolet)"
                   />
                   <path
                     d="M 348 102 C 388 90 420 120 412 165 C 392 135 368 132 348 138 Z"
-                    fill="url(#splashGold)"
+                    fill="url(#splashViolet)"
                   />
 
                   {/* 4. Woven Diagonal Wave */}
