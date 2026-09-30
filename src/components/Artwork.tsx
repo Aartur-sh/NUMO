@@ -324,6 +324,9 @@ export const Artwork: React.FC<ArtworkProps> = ({
 
       {/* Main Card Container with Swipe Gesture & Gradient Border */}
       <motion.div
+        initial={{
+          scale: isPlaying ? 1 : 0.98,
+        }}
         animate={{
           scale: isPlaying ? 1 : 0.98,
         }}
@@ -340,11 +343,11 @@ export const Artwork: React.FC<ArtworkProps> = ({
               {viewMode === 'cover' ? (
                 <motion.div
                   key="cover-view"
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full h-full relative flex items-center justify-center overflow-hidden"
+                  className="w-full h-full relative flex items-center justify-center overflow-hidden bg-slate-900"
                 >
                   {resolvedArtUrl && !imageError ? (
                     <img
@@ -379,7 +382,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                 /* Interactive High-End Vinyl Turntable Player with handwritten marker "NUMO Radio" on black vinyl */
                 <motion.div
                   key="turntable-view"
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
@@ -444,7 +447,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
                         <div
                           className={`w-full rounded-t-sm transition-[opacity,box-shadow] bg-gradient-to-t ${bar.bg}`}
                           style={{
-                            height: isPlaying ? undefined : '14%',
+                            height: '14%',
                             opacity: isPlaying ? 0.95 : 0.35,
                             boxShadow: isPlaying ? `0 0 8px ${bar.glow}` : 'none',
                             animationName: isPlaying ? bar.anim : 'none',
