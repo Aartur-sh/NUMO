@@ -207,12 +207,10 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
         )}
       </div>
 
-      {/* Artist (if present) */}
-      {artist && (
-        <p className="text-xs sm:text-sm font-medium text-slate-400 mt-0.5 truncate w-full px-1">
-          {artist}
-        </p>
-      )}
+      {/* Artist (reserved fixed height to eliminate startup vertical layout shift) */}
+      <p className="text-xs sm:text-sm font-medium text-slate-400 mt-0.5 truncate w-full px-1 min-h-[1.25rem]">
+        {artist || '\u00A0'}
+      </p>
 
       {/* Duration Bar & Timers */}
       <div className="w-full mt-1.5 px-1">

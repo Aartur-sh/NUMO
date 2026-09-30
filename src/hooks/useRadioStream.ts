@@ -1,6 +1,36 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Song } from '../types';
 
+export type ServerId = 'server1' | 'server2';
+
+export interface ServerOption {
+  id: ServerId;
+  nameUk: string;
+  nameEn: string;
+  url: string;
+  descUk: string;
+  descEn: string;
+}
+
+export const STREAM_SERVERS: ServerOption[] = [
+  {
+    id: 'server1',
+    nameUk: 'Основний сервер (HTTPS)',
+    nameEn: 'Primary Server (HTTPS)',
+    url: 'https://numo.pp.ua/listen/solo/radio.mp3',
+    descUk: 'numo.pp.ua • HTTPS потік',
+    descEn: 'numo.pp.ua • HTTPS Stream',
+  },
+  {
+    id: 'server2',
+    nameUk: 'Резервний сервер (IP)',
+    nameEn: 'Backup Server (IP Direct)',
+    url: 'http://144.24.190.71:8000/stream.m3u',
+    descUk: '144.24.190.71:8000 • Прямий потік',
+    descEn: '144.24.190.71:8000 • Direct Stream',
+  },
+];
+
 const getInitialVolume = (): number => {
   try {
     const saved = localStorage.getItem('numo_radio_volume');
@@ -11,7 +41,7 @@ const getInitialVolume = (): number => {
       }
     }
   } catch {}
-  return 1.0; // Максимальна гучність при першому запуску
+  return 1.0;
 };
 
 const getInitialMuted = (): boolean => {
@@ -22,6 +52,14 @@ const getInitialMuted = (): boolean => {
   }
 };
 
+const getInitialServer = (): ServerId => {
+  try {
+    const saved = localStorage.getItem('numo_selected_server');
+    if (saved === 'server2') return 'server2';
+  } catch {}
+  return 'server1';
+};
+
 export function useRadioStream(currentSong?: Song) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isPlayingRef = useRef(false);
@@ -30,10 +68,13 @@ export function useRadioStream(currentSong?: Song) {
   const [isBuffering, setIsBuffering] = useState(false);
   const [volume, setVolumeState] = useState<number>(getInitialVolume);
   const [isMuted, setIsMuted] = useState<boolean>(getInitialMuted);
+  const [selectedServer, setSelectedServer] = useState<ServerId>(getInitialServer);
   const [error, setError] = useState<string | null>(null);
 
-  const PRIMARY_STREAM = 'https://numo.pp.ua/listen/solo/radio.mp3';
-  const FALLBACK_STREAM = 'http://numo.pp.ua/listen/solo/radio.mp3';
+  const getActiveServerUrl = useCallback((serverId: ServerId) => {
+    const opt = STREAM_SERVERS.find((s) => s.id === serverId);
+    return opt ? opt.url : STREAM_SERVERS[0].url;
+  }, []);
 
   // Initialize or attach to real DOM audio element
   useEffect(() => {
@@ -85,12 +126,13 @@ export function useRadioStream(currentSong?: Song) {
 
       console.warn('Audio stream error event:', mediaError?.code, mediaError?.message);
 
-      // Try cleartext HTTP fallback if HTTPS encountered an SSL/Proxy issue
-      if (audioEl.src.startsWith('https://')) {
-        console.log('Switching to cleartext HTTP fallback...');
-        audioEl.src = FALLBACK_STREAM;
+      // Try fallback stream on primary server error
+      const fallbackUrl = STREAM_SERVERS[1].url;
+      if (audioEl.src !== fallbackUrl) {
+        console.log('Switching to backup server stream...');
+        audioEl.src = fallbackUrl;
         audioEl.play().catch((err) => {
-          console.warn('Fallback stream failed:', err);
+          console.warn('Backup stream failed:', err);
           isPlayingRef.current = false;
           setIsLoading(false);
           setIsBuffering(false);
@@ -166,14 +208,15 @@ export function useRadioStream(currentSong?: Song) {
     setError(null);
     isPlayingRef.current = true;
 
+    const targetUrl = getActiveServerUrl(selectedServer);
+
     // Set audio source if not already active
-    if (!audio.src || !audio.src.includes('numo.pp.ua')) {
-      audio.src = PRIMARY_STREAM;
+    if (!audio.src || audio.src !== targetUrl) {
+      audio.src = targetUrl;
     }
 
     audio.volume = isMuted ? 0 : volume;
 
-    // Direct invocation without audio.load() which cancels playback in Chromium
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise
@@ -189,10 +232,10 @@ export function useRadioStream(currentSong?: Song) {
             return;
           }
 
-          // If playback failed on primary stream, attempt fallback
-          if (audio && audio.src !== FALLBACK_STREAM) {
-            console.log('Attempting HTTP fallback after rejection...');
-            audio.src = FALLBACK_STREAM;
+          const fallbackUrl = selectedServer === 'server1' ? STREAM_SERVERS[1].url : STREAM_SERVERS[0].url;
+          if (audio && audio.src !== fallbackUrl) {
+            console.log('Attempting server fallback after rejection...');
+            audio.src = fallbackUrl;
             audio.play()
               .then(() => {
                 setIsPlaying(true);
@@ -217,19 +260,52 @@ export function useRadioStream(currentSong?: Song) {
           setError('Помилка відтворення. Натисніть Play для повтору.');
         });
     }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, selectedServer, getActiveServerUrl]);
 
   const pause = useCallback(() => {
     if (!audioRef.current) return;
     isPlayingRef.current = false;
     const audio = audioRef.current;
     audio.pause();
-    // Do NOT call audio.load() - just release src cleanly
     audio.removeAttribute('src');
     setIsPlaying(false);
     setIsLoading(false);
     setIsBuffering(false);
   }, []);
+
+  const selectServer = useCallback((serverId: ServerId) => {
+    setSelectedServer(serverId);
+    try {
+      localStorage.setItem('numo_selected_server', serverId);
+    } catch {}
+
+    const targetUrl = getActiveServerUrl(serverId);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const wasPlaying = isPlayingRef.current;
+    audio.pause();
+    audio.src = targetUrl;
+
+    if (wasPlaying) {
+      setIsLoading(true);
+      isPlayingRef.current = true;
+      audio.play()
+        .then(() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+          setIsBuffering(false);
+          setError(null);
+        })
+        .catch((err) => {
+          console.warn('Failed to play newly selected server:', err);
+          isPlayingRef.current = false;
+          setIsPlaying(false);
+          setIsLoading(false);
+          setError('Не вдалося підключитися до обраного сервера');
+        });
+    }
+  }, [getActiveServerUrl]);
 
   const togglePlay = useCallback(() => {
     setError(null);
@@ -276,7 +352,7 @@ export function useRadioStream(currentSong?: Song) {
 
     const startVol = audio.volume;
     const targetVol = nextMuted ? 0 : volume;
-    const duration = 200; // 200ms smooth audio fade
+    const duration = 200;
     const steps = 10;
     const stepTime = duration / steps;
     let stepCount = 0;
@@ -303,6 +379,8 @@ export function useRadioStream(currentSong?: Song) {
     isBuffering,
     volume,
     isMuted,
+    selectedServer,
+    selectServer,
     error,
     togglePlay,
     pause,

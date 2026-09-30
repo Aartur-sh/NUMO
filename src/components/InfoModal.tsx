@@ -11,6 +11,7 @@ import {
   Loader2,
   FlaskConical,
   Heart,
+  Server,
 } from 'lucide-react';
 import type { NowPlayingResponse } from '../types';
 import type { Language } from '../i18n';
@@ -21,6 +22,7 @@ import {
   type AppReleaseInfo,
 } from '../services/updateService';
 import { NativeUpdate } from '../services/nativeUpdateService';
+import { STREAM_SERVERS, type ServerId } from '../hooks/useRadioStream';
 
 interface InfoModalProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ interface InfoModalProps {
   lang: Language;
   onOpenUpdateModal?: (info: AppReleaseInfo) => void;
   releaseInfo?: AppReleaseInfo | null;
+  selectedServer?: ServerId;
+  onSelectServer?: (id: ServerId) => void;
 }
 
 export const InfoModal: React.FC<InfoModalProps> = ({
@@ -37,6 +41,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   data,
   lang,
   releaseInfo,
+  selectedServer = 'server1',
+  onSelectServer,
 }) => {
   const t = translations[lang];
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -360,6 +366,58 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                   </svg>
                   <span className="tracking-tight">PayPal</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Server Selector Section */}
+            <div className="flex flex-col gap-2 rounded-2xl bg-white/[0.05] border border-white/10 p-3.5 shadow-inner">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-cyan-300">
+                  {lang === 'en' ? 'Audio Stream Server' : 'Вибір сервера ефіру'}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 mt-1">
+                {STREAM_SERVERS.map((server) => {
+                  const isSelected = selectedServer === server.id;
+                  return (
+                    <button
+                      key={server.id}
+                      type="button"
+                      onClick={() => onSelectServer?.(server.id)}
+                      className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer select-none active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-cyan-950/80 via-sky-950/70 to-indigo-950/80 border-cyan-400/60 shadow-lg shadow-cyan-950/50 text-white'
+                          : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all ${
+                            isSelected
+                              ? 'bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-pulse'
+                              : 'bg-slate-600'
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold leading-tight truncate">
+                            {lang === 'en' ? server.nameEn : server.nameUk}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">
+                            {lang === 'en' ? server.descEn : server.descUk}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isSelected && (
+                        <span className="px-2 py-0.5 rounded-md bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                          {lang === 'en' ? 'Active' : 'Активний'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

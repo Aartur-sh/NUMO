@@ -67,23 +67,17 @@ export const Controls: React.FC<ControlsProps> = ({
       return;
     }
 
-    if (displayStep === targetStep) return;
-
     const timer = setInterval(() => {
       setDisplayStep((prev) => {
-        if (prev < targetStep) {
-          return prev + 1;
-        } else if (prev > targetStep) {
-          return prev - 1;
-        } else {
-          clearInterval(timer);
-          return prev;
-        }
+        if (prev < targetStep) return prev + 1;
+        if (prev > targetStep) return prev - 1;
+        clearInterval(timer);
+        return prev;
       });
-    }, 25); // 25ms per notch = ~200-250ms for smooth fluid drop or rise
+    }, 20);
 
     return () => clearInterval(timer);
-  }, [targetStep, displayStep]);
+  }, [targetStep]);
 
   // Reset or start the 5-second volume auto-hide countdown
   const resetAutoHideTimer = () => {
@@ -309,10 +303,10 @@ export const Controls: React.FC<ControlsProps> = ({
                   return (
                     <div
                       key={stepNum}
-                      className={`w-6 h-2 rounded-[2px] transition-all duration-150 ${
+                      className={`w-6 h-2 rounded-[2px] transition-[opacity,box-shadow,background] duration-100 ease-out ${
                         isActive
-                          ? `bg-gradient-to-r ${notch.bg} shadow-[0_0_8px_${notch.glow}] scale-100 opacity-100`
-                          : 'bg-white/15 scale-95 opacity-40'
+                          ? `bg-gradient-to-r ${notch.bg} shadow-[0_0_8px_${notch.glow}] opacity-100`
+                          : 'bg-white/15 opacity-25 shadow-none'
                       }`}
                     />
                   );
