@@ -25,9 +25,11 @@ export const STREAM_SERVERS: ServerOption[] = [
     id: 'server2',
     nameUk: 'Резервний сервер (IP)',
     nameEn: 'Backup Server (IP Direct)',
-    url: 'http://144.24.190.71:8000/stream.m3u',
-    descUk: '144.24.190.71:8000 • Прямий потік',
-    descEn: '144.24.190.71:8000 • Direct Stream',
+    url: typeof window !== 'undefined' && window.location?.protocol === 'https:'
+      ? '/api/radio/stream?server=server2'
+      : 'http://144.24.190.71:8000/stream',
+    descUk: '144.24.190.71:8000 • Резервний потік',
+    descEn: '144.24.190.71:8000 • Backup Stream',
   },
 ];
 

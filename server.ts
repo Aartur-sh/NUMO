@@ -85,7 +85,12 @@ app.get('/api/radio/nowplaying', async (_req, res) => {
 
 // Proxy endpoint for audio stream (prevents Mixed Content HTTP-on-HTTPS errors)
 app.get('/api/radio/stream', (req, res) => {
-  const streamUrl = `${AZURACAST_BASE}/listen/solo/radio.mp3`;
+  const serverParam = req.query.server as string;
+  let streamUrl = `${AZURACAST_BASE}/listen/solo/radio.mp3`;
+
+  if (serverParam === 'server2') {
+    streamUrl = 'http://144.24.190.71:8000/stream';
+  }
 
   // Avoid socket timeout during continuous radio listening
   req.socket.setTimeout(0);
@@ -93,6 +98,24 @@ app.get('/api/radio/stream', (req, res) => {
 
   const client = streamUrl.startsWith('https') ? https : http;
   const streamReq = client.get(streamUrl, (streamRes) => {
+    // Handle Icecast redirects (301/302)
+    if (streamRes.statusCode && streamRes.statusCode >= 300 && streamRes.statusCode < 400 && streamRes.headers.location) {
+      const redirectUrl = streamRes.headers.location;
+      const redirectClient = redirectUrl.startsWith('https') ? https : http;
+      redirectClient.get(redirectUrl, (redRes) => {
+        res.setHeader('Content-Type', redRes.headers['content-type'] || 'audio/mpeg');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Connection', 'keep-alive');
+        redRes.pipe(res);
+      }).on('error', (err) => {
+        console.error('Redirect stream proxy error:', err.message);
+        if (!res.headersSent) res.status(502).send('Error connecting to radio stream');
+      });
+      return;
+    }
+
     res.setHeader('Content-Type', streamRes.headers['content-type'] || 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
