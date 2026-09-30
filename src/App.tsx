@@ -61,12 +61,23 @@ export default function App() {
     isBuffering,
     volume,
     isMuted,
+    selectedServer,
+    selectServer,
     error: audioError,
     togglePlay,
+    play,
     pause,
     setVolume,
     toggleMute,
   } = useRadioStream(currentSong);
+
+  // Autoplay stream immediately on launch
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      play();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [play]);
 
   // Sleep Timer state
   const [sleepMinutes, setSleepMinutes] = useState<number>(0);
@@ -220,6 +231,8 @@ export default function App() {
         data={data}
         lang={lang}
         releaseInfo={releaseInfo}
+        selectedServer={selectedServer}
+        onSelectServer={selectServer}
         onOpenUpdateModal={() => {
           setIsInfoOpen(false);
           setIsUpdateModalOpen(true);

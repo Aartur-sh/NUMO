@@ -27,8 +27,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
         <motion.div
           key="splash"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.04 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
           onClick={handleDismiss}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#070a12] select-none cursor-pointer overflow-hidden"
         >

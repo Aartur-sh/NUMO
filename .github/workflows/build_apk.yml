@@ -63,7 +63,11 @@ jobs:
             "appName": "NUMO Radio",
             "webDir": "dist",
             "server": { "cleartext": true },
-            "android": { "allowMixedContent": true },
+            "android": {
+              "allowMixedContent": true,
+              "keepRunning": true,
+              "backgroundColor": "#070A12"
+            },
             "plugins": { "StatusBar": { "overlaysWebView": true } }
           }
           EOF

@@ -102,6 +102,11 @@ export function useRadioStream(currentSong?: Song) {
       setIsLoading(false);
       setIsBuffering(false);
       setError(null);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'playing';
+        } catch {}
+      }
     };
 
     const handlePause = () => {
@@ -109,6 +114,11 @@ export function useRadioStream(currentSong?: Song) {
       setIsPlaying(false);
       setIsLoading(false);
       setIsBuffering(false);
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = 'paused';
+        } catch {}
+      }
     };
 
     const handleError = () => {
