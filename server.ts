@@ -60,16 +60,47 @@ app.get('/api/radio/nowplaying', async (_req, res) => {
   }
 });
 
-// Proxy endpoint for audio stream (strict HTTPS)
+// Wildcard proxy route for HLS playlists and segments (/api/radio/hls/* -> https://numo.pp.ua/hls/*)
+app.get('/api/radio/hls/*', (req, res) => {
+  const fileSubPath = req.params[0] || 'live.m3u8';
+  const targetUrl = `${NUMO_BASE}/hls/${fileSubPath}`;
+
+  req.socket.setTimeout(0);
+  res.socket?.setTimeout(0);
+
+  const streamReq = https.get(targetUrl, (streamRes) => {
+    const contentType = streamRes.headers['content-type'] ||
+      (fileSubPath.endsWith('.m3u8')
+        ? 'application/vnd.apple.mpegurl'
+        : fileSubPath.endsWith('.ts')
+        ? 'video/mp2t'
+        : 'application/octet-stream');
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    streamRes.pipe(res);
+  });
+
+  streamReq.on('error', (err) => {
+    console.error('HLS proxy error:', err.message);
+    if (!res.headersSent) {
+      res.status(502).send('Error connecting to HLS stream');
+    }
+  });
+
+  req.on('close', () => {
+    streamReq.destroy();
+  });
+});
+
+// Proxy endpoint for continuous Icecast MP3 audio stream
 app.get('/api/radio/stream', (req, res) => {
-  const serverParam = req.query.server as string;
-  let streamUrl = `${NUMO_BASE}/icecast/stream`;
+  const streamUrl = `${NUMO_BASE}/icecast/stream`;
 
-  if (serverParam === 'server2' || serverParam === 'hls') {
-    streamUrl = `${NUMO_BASE}/hls/live.m3u8`;
-  }
-
-  // Avoid socket timeout during continuous radio listening
   req.socket.setTimeout(0);
   res.socket?.setTimeout(0);
 
