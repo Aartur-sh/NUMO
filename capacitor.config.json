@@ -1,0 +1,14 @@
+{
+  "appId": "ua.pp.numo.radio",
+  "appName": "NUMO Radio",
+  "webDir": "dist",
+  "backgroundColor": "#07090E",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#07090E"
+  }
+}

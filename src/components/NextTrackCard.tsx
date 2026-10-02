@@ -1,7 +1,16 @@
 import React from 'react';
-import type { PlayingNext } from '../types';
 import type { Language } from '../i18n';
 import { translations } from '../i18n';
+
+export interface PlayingNext {
+  cued_at?: number;
+  duration?: number;
+  song?: {
+    id?: string;
+    title?: string;
+    artist?: string;
+  };
+}
 
 interface NextTrackCardProps {
   playingNext: PlayingNext | null;

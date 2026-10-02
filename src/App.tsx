@@ -116,7 +116,7 @@ export default function App() {
   const songArt = currentSong?.art;
   const totalDuration = data?.now_playing?.duration || 0;
   const playingNext = data?.playing_next || null;
-  const bitrate = data?.station?.mounts?.[0]?.bitrate || 192;
+  const bitrate = 192;
 
   return (
     <div

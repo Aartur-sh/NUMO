@@ -61,6 +61,66 @@ const getInitialServer = (): ServerId => {
   return 'server1';
 };
 
+const toAbsoluteUrl = (path: string): string => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  try {
+    return new URL(path, window.location.origin).href;
+  } catch {
+    return path;
+  }
+};
+
+// Web Audio Keep-Alive to prevent Android OS / WebView from killing background audio
+let keepAliveContext: AudioContext | null = null;
+let keepAliveOsc: OscillatorNode | null = null;
+let keepAliveGain: GainNode | null = null;
+
+const startKeepAlive = () => {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    if (!keepAliveContext || keepAliveContext.state === 'closed') {
+      keepAliveContext = new AudioCtx();
+    }
+
+    if (keepAliveContext.state === 'suspended') {
+      keepAliveContext.resume().catch(() => {});
+    }
+
+    if (!keepAliveOsc && keepAliveContext) {
+      keepAliveOsc = keepAliveContext.createOscillator();
+      keepAliveGain = keepAliveContext.createGain();
+      // Inaudible sub-bass at near-zero volume keeps Android AudioFlinger hardware channel open in background
+      keepAliveGain.gain.value = 0.0001;
+      keepAliveOsc.frequency.value = 1;
+      keepAliveOsc.connect(keepAliveGain);
+      keepAliveGain.connect(keepAliveContext.destination);
+      keepAliveOsc.start();
+    }
+  } catch (e) {
+    console.debug('KeepAlive init:', e);
+  }
+};
+
+const stopKeepAlive = () => {
+  try {
+    if (keepAliveOsc) {
+      keepAliveOsc.stop();
+      keepAliveOsc.disconnect();
+      keepAliveOsc = null;
+    }
+    if (keepAliveGain) {
+      keepAliveGain.disconnect();
+      keepAliveGain = null;
+    }
+    if (keepAliveContext && keepAliveContext.state === 'running') {
+      keepAliveContext.suspend().catch(() => {});
+    }
+  } catch (e) {}
+};
+
 export function useRadioStream(currentSong?: Song) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -71,6 +131,10 @@ export function useRadioStream(currentSong?: Song) {
   const [volume, setVolumeState] = useState<number>(getInitialVolume);
   const [isMuted, setIsMuted] = useState<boolean>(getInitialMuted);
   const [selectedServer, setSelectedServer] = useState<ServerId>(getInitialServer);
+  const selectedServerRef = useRef<ServerId>(selectedServer);
+  useEffect(() => {
+    selectedServerRef.current = selectedServer;
+  }, [selectedServer]);
   const [error, setError] = useState<string | null>(null);
 
   const getActiveServerUrl = useCallback((serverId: ServerId) => {
@@ -117,6 +181,7 @@ export function useRadioStream(currentSong?: Song) {
       setIsLoading(false);
       setIsBuffering(false);
       setError(null);
+      startKeepAlive();
       if ('mediaSession' in navigator) {
         try {
           navigator.mediaSession.playbackState = 'playing';
@@ -129,6 +194,7 @@ export function useRadioStream(currentSong?: Song) {
       setIsPlaying(false);
       setIsLoading(false);
       setIsBuffering(false);
+      stopKeepAlive();
       if ('mediaSession' in navigator) {
         try {
           navigator.mediaSession.playbackState = 'paused';
@@ -140,58 +206,49 @@ export function useRadioStream(currentSong?: Song) {
       const audioEl = audioRef.current;
       if (!audioEl || !isPlayingRef.current) return;
 
+      // Ignore aborted error during source switches or detaches
+      if (audioEl.error && audioEl.error.code === 1) return;
+
+      // If Hls.js is active, it handles stream network and media recovery on its own
+      if (hlsRef.current) return;
+
       console.warn('Audio stream error event:', audioEl.error?.code, audioEl.error?.message);
 
       isPlayingRef.current = false;
       setIsLoading(false);
       setIsBuffering(false);
       setIsPlaying(false);
+      stopKeepAlive();
       setError('Помилка підключення до сервера. Натисніть Play для повтору.');
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && isPlayingRef.current) {
+        if (audio.paused) {
+          audio.play().catch(() => {});
+        }
+        startKeepAlive();
+      }
     };
 
     audio.addEventListener('waiting', handleWaiting);
     audio.addEventListener('playing', handlePlaying);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('error', handleError);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       destroyHls();
+      stopKeepAlive();
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('error', handleError);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [destroyHls]);
 
-  // Update MediaSession on track or play state change for Android Lockscreen & Notification Banner
-  useEffect(() => {
-    if ('mediaSession' in navigator) {
-      const title = currentSong?.title || 'NUMO Radio';
-      const artist = currentSong?.artist || 'Electronic & Ambient';
-      const album = currentSong?.album || 'NUMO Live Stream';
-      const artUrl = currentSong?.art && currentSong.art.length > 5
-        ? currentSong.art
-        : '/pwa-512x512.png';
-
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title,
-        artist,
-        album,
-        artwork: [
-          { src: artUrl, sizes: '512x512', type: 'image/jpeg' },
-          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-        ],
-      });
-
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-
-      navigator.mediaSession.setActionHandler('play', () => { play(); });
-      navigator.mediaSession.setActionHandler('pause', () => { pause(); });
-      navigator.mediaSession.setActionHandler('stop', () => { pause(); });
-    }
-  }, [currentSong, isPlaying]);
-
-  const play = useCallback(() => {
+  const play = useCallback((targetServerId?: ServerId) => {
     let audio = audioRef.current;
     if (!audio) {
       audio = document.getElementById('numo-audio-player') as HTMLAudioElement;
@@ -202,26 +259,31 @@ export function useRadioStream(currentSong?: Song) {
     setIsLoading(true);
     setError(null);
     isPlayingRef.current = true;
+    startKeepAlive();
 
-    const targetUrl = getActiveServerUrl(selectedServer);
+    const activeServer = targetServerId || selectedServerRef.current;
+    const targetUrl = getActiveServerUrl(activeServer);
     const isHlsStream = targetUrl.endsWith('.m3u8') || targetUrl.includes('/hls/');
 
     audio.volume = isMuted ? 0 : volume;
 
-    // Check if browser requires hls.js (Chrome, Android WebView, Firefox) vs Native HLS (Safari/iOS)
-    if (isHlsStream && !audio.canPlayType('application/vnd.apple.mpegurl')) {
+    // For HLS streams: prioritize Hls.js first (Chrome, Edge, Firefox, Android), else fallback to native Safari HLS
+    if (isHlsStream) {
       if (Hls.isSupported()) {
         destroyHls();
 
         const hls = new Hls({
           enableWorker: true,
-          lowLatencyMode: true,
+          lowLatencyMode: false,
           backBufferLength: 30,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
+          liveSyncDurationCount: 3,
         });
 
         hlsRef.current = hls;
-        hls.loadSource(targetUrl);
         hls.attachMedia(audio);
+        hls.loadSource(targetUrl);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           audio?.play().then(() => {
@@ -259,6 +321,26 @@ export function useRadioStream(currentSong?: Song) {
           }
         });
         return;
+      } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+        // iOS Safari native HLS
+        destroyHls();
+        if (audio.src !== targetUrl) {
+          audio.src = targetUrl;
+        }
+
+        audio.play().then(() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+          setIsBuffering(false);
+          setError(null);
+        }).catch((err: any) => {
+          console.warn('Native HLS play rejected:', err);
+          isPlayingRef.current = false;
+          setIsLoading(false);
+          setIsPlaying(false);
+          setError('Помилка відтворення. Натисніть Play для повтору.');
+        });
+        return;
       }
     }
 
@@ -293,10 +375,11 @@ export function useRadioStream(currentSong?: Song) {
           setError('Помилка відтворення. Натисніть Play для повтору.');
         });
     }
-  }, [volume, isMuted, selectedServer, getActiveServerUrl, destroyHls]);
+  }, [volume, isMuted, getActiveServerUrl, destroyHls]);
 
   const pause = useCallback(() => {
     isPlayingRef.current = false;
+    stopKeepAlive();
     destroyHls();
     if (audioRef.current) {
       const audio = audioRef.current;
@@ -313,8 +396,53 @@ export function useRadioStream(currentSong?: Song) {
     }
   }, [destroyHls]);
 
+  // Update MediaSession on track or play state change for Android Lockscreen & Notification Banner
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      const title = currentSong?.title || 'NUMO Radio';
+      const artist = currentSong?.artist || 'Electronic & Ambient';
+      const album = currentSong?.album || 'NUMO Live Stream';
+      const rawArt = currentSong?.art && currentSong.art.length > 5
+        ? currentSong.art
+        : '/pwa-512x512.png';
+
+      const artUrl = toAbsoluteUrl(rawArt);
+      const fallbackArt = toAbsoluteUrl('/pwa-512x512.png');
+      const icon192 = toAbsoluteUrl('/pwa-192x192.png');
+
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title,
+          artist,
+          album,
+          artwork: [
+            { src: artUrl, sizes: '512x512', type: 'image/jpeg' },
+            { src: artUrl, sizes: '384x384', type: 'image/jpeg' },
+            { src: artUrl, sizes: '256x256', type: 'image/jpeg' },
+            { src: icon192, sizes: '192x192', type: 'image/png' },
+            { src: fallbackArt, sizes: '512x512', type: 'image/png' },
+          ],
+        });
+      } catch (err) {
+        console.debug('MediaMetadata error:', err);
+      }
+
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+      try {
+        navigator.mediaSession.setActionHandler('play', () => { play(); });
+        navigator.mediaSession.setActionHandler('pause', () => { pause(); });
+        navigator.mediaSession.setActionHandler('stop', () => { pause(); });
+        // Providing previoustrack and nexttrack enables the full MediaStyle lockscreen card on Android
+        navigator.mediaSession.setActionHandler('previoustrack', () => { play(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { play(); });
+      } catch (e) {}
+    }
+  }, [currentSong, isPlaying, play, pause]);
+
   const selectServer = useCallback((serverId: ServerId) => {
     setSelectedServer(serverId);
+    selectedServerRef.current = serverId;
     try {
       localStorage.setItem('numo_selected_server', serverId);
     } catch {}
@@ -324,10 +452,10 @@ export function useRadioStream(currentSong?: Song) {
 
     if (wasPlaying) {
       setTimeout(() => {
-        play();
-      }, 150);
+        play(serverId);
+      }, 100);
     }
-  }, [getActiveServerUrl, pause, play]);
+  }, [pause, play]);
 
   const togglePlay = useCallback(() => {
     setError(null);
