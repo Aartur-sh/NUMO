@@ -82,10 +82,12 @@ export function useRadioStream(currentSong?: Song) {
     if (!audio) {
       audio = document.createElement('audio');
       audio.id = 'numo-audio-player';
-      audio.preload = 'none';
+      audio.preload = 'auto';
       audio.setAttribute('playsinline', 'true');
       audio.setAttribute('webkit-playsinline', 'true');
       document.body.appendChild(audio);
+    } else {
+      audio.preload = 'auto';
     }
     audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
@@ -131,27 +133,12 @@ export function useRadioStream(currentSong?: Song) {
 
       console.warn('Audio stream error event:', audioEl.error?.code, audioEl.error?.message);
 
-      // Try fallback server stream
-      const activeUrl = getActiveServerUrl(selectedServer);
-      const fallbackUrl = selectedServer === 'server1' ? STREAM_SERVERS[1].url : STREAM_SERVERS[0].url;
-
-      if (audioEl.src !== fallbackUrl) {
-        console.log('Switching to fallback server stream...');
-        audioEl.src = fallbackUrl;
-        audioEl.play().catch(() => {
-          isPlayingRef.current = false;
-          setIsLoading(false);
-          setIsBuffering(false);
-          setIsPlaying(false);
-          setError('Помилка завантаження потоку. Натисніть Play для повтору.');
-        });
-      } else {
-        isPlayingRef.current = false;
-        setIsLoading(false);
-        setIsBuffering(false);
-        setIsPlaying(false);
-        setError('Помилка завантаження потоку. Натисніть Play для повтору.');
-      }
+      // Do NOT switch servers automatically! Stay on selected server and report error
+      isPlayingRef.current = false;
+      setIsLoading(false);
+      setIsBuffering(false);
+      setIsPlaying(false);
+      setError('Помилка підключення до сервера. Натисніть Play для повтору.');
     };
 
     audio.addEventListener('waiting', handleWaiting);
@@ -231,26 +218,6 @@ export function useRadioStream(currentSong?: Song) {
         .catch((err: any) => {
           console.warn('Playback request rejected:', err?.name, err?.message);
           if (err?.name === 'AbortError') return;
-
-          const fallbackUrl = selectedServer === 'server1' ? STREAM_SERVERS[1].url : STREAM_SERVERS[0].url;
-          if (audio && audio.src !== fallbackUrl) {
-            audio.src = fallbackUrl;
-            audio.play()
-              .then(() => {
-                setIsPlaying(true);
-                setIsLoading(false);
-                setIsBuffering(false);
-                setError(null);
-              })
-              .catch(() => {
-                isPlayingRef.current = false;
-                setIsLoading(false);
-                setIsPlaying(false);
-                setIsBuffering(false);
-                setError('Помилка відтворення. Натисніть Play для повтору.');
-              });
-            return;
-          }
 
           isPlayingRef.current = false;
           setIsLoading(false);
