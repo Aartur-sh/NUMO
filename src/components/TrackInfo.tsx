@@ -21,7 +21,7 @@ function formatTime(seconds: number): string {
   return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-export const TrackInfo: React.FC<TrackInfoProps> = ({
+export const TrackInfo: React.FC<TrackInfoProps> = React.memo(({
   title = 'NUMO Radio',
   artist = '',
   elapsedSeconds,
@@ -239,4 +239,4 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
       )}
     </div>
   );
-};
+});

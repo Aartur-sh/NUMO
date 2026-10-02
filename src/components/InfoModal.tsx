@@ -447,21 +447,21 @@ export const InfoModal: React.FC<InfoModalProps> = ({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-xs font-black uppercase tracking-wider text-cyan-300">
-                  {lang === 'en' ? 'About NUMO Radio' : 'Про NUMO Radio'}
+                  {lang === 'en' ? 'NUMO • Nite Unique Mood On' : 'NUMO • Nite Unique Mood On'}
                 </h3>
               </div>
 
-              {/* Story Description */}
+              {/* Story Description with Deep Focus and NUMO Acronym Slogan */}
               <div className="text-xs text-slate-300 leading-relaxed space-y-2">
                 <p>
                   {lang === 'en'
-                    ? 'NUMO Radio is an independent atmospheric sound station created for those who value deep soundscapes, focus, and nocturnal aesthetics.'
-                    : 'NUMO Radio — це незалежна атмосферна звукова станція, створена для тих, хто цінує глибокі вайби, творчий фокус та естетику нічного розслаблення.'}
+                    ? 'NUMO (Nite Unique Mood On) is an atmospheric sound sanctuary created for those who immerse themselves in deep soundscapes, creative focus, and nocturnal aesthetics.'
+                    : 'NUMO (Nite Unique Mood On) — незалежна атмосферна станція, створена для тих, хто занурюється у світ глибокого електронного саунду, творчого фокусу та нічної естетики.'}
                 </p>
                 <p className="text-slate-400 text-[11px]">
                   {lang === 'en'
-                    ? 'Broadcasting 24/7 Deep House, Atmospheric Organic Beats, Chill, and Electronic gems from Ukrainian and global producers. Zero ads, zero talk shows — pure continuous music flow.'
-                    : 'Цілодобовий ефір Deep House, Organic Beats, Chill та електронних шедеврів від українських і світових продюсерів. Без реклами та розмов — лише чистий музичний потік.'}
+                    ? 'Broadcasting 24/7 Deep House, Melodic Techno, Progressive, Organic Beats, and atmospheric electronica. Zero commercial ads, zero talk shows — 100% hypnotic, uninterrupted deep flow.'
+                    : 'Цілодобовий ефір Deep House, Melodic Techno, Progressive, Organic Beats та атмосферної електроніки. Жодної комерційної реклами чи розмовних шоу — лише безперервний гіпнотичний Deep потік.'}
                 </p>
               </div>
             </div>

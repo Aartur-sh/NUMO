@@ -71,59 +71,11 @@ const toAbsoluteUrl = (path: string): string => {
   }
 };
 
-// Web Audio Keep-Alive to prevent Android OS / WebView from killing background audio
-let keepAliveContext: AudioContext | null = null;
-let keepAliveOsc: OscillatorNode | null = null;
-let keepAliveGain: GainNode | null = null;
-
-const startKeepAlive = () => {
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-
-    if (!keepAliveContext || keepAliveContext.state === 'closed') {
-      keepAliveContext = new AudioCtx();
-    }
-
-    if (keepAliveContext.state === 'suspended') {
-      keepAliveContext.resume().catch(() => {});
-    }
-
-    if (!keepAliveOsc && keepAliveContext) {
-      keepAliveOsc = keepAliveContext.createOscillator();
-      keepAliveGain = keepAliveContext.createGain();
-      // Inaudible sub-bass at near-zero volume keeps Android AudioFlinger hardware channel open in background
-      keepAliveGain.gain.value = 0.0001;
-      keepAliveOsc.frequency.value = 1;
-      keepAliveOsc.connect(keepAliveGain);
-      keepAliveGain.connect(keepAliveContext.destination);
-      keepAliveOsc.start();
-    }
-  } catch (e) {
-    console.debug('KeepAlive init:', e);
-  }
-};
-
-const stopKeepAlive = () => {
-  try {
-    if (keepAliveOsc) {
-      keepAliveOsc.stop();
-      keepAliveOsc.disconnect();
-      keepAliveOsc = null;
-    }
-    if (keepAliveGain) {
-      keepAliveGain.disconnect();
-      keepAliveGain = null;
-    }
-    if (keepAliveContext && keepAliveContext.state === 'running') {
-      keepAliveContext.suspend().catch(() => {});
-    }
-  } catch (e) {}
-};
-
 export function useRadioStream(currentSong?: Song) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const intentStateRef = useRef<'playing' | 'paused'>('paused');
+  const activePlayPromiseRef = useRef<Promise<void> | null>(null);
   const isPlayingRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -153,7 +105,7 @@ export function useRadioStream(currentSong?: Song) {
     }
   }, []);
 
-  // Initialize DOM audio player
+  // Initialize DOM audio player with pre-warmed connection
   useEffect(() => {
     let audio = document.getElementById('numo-audio-player') as HTMLAudioElement;
     if (!audio) {
@@ -179,18 +131,21 @@ export function useRadioStream(currentSong?: Song) {
     audioRef.current = audio;
 
     const handleWaiting = () => {
-      if (isPlayingRef.current) {
+      if (intentStateRef.current === 'playing') {
         setIsBuffering(true);
       }
     };
 
     const handlePlaying = () => {
+      if (intentStateRef.current !== 'playing') {
+        audio.pause();
+        return;
+      }
       isPlayingRef.current = true;
       setIsPlaying(true);
       setIsLoading(false);
       setIsBuffering(false);
       setError(null);
-      startKeepAlive();
       if ('mediaSession' in navigator) {
         try {
           navigator.mediaSession.playbackState = 'playing';
@@ -199,21 +154,22 @@ export function useRadioStream(currentSong?: Song) {
     };
 
     const handlePause = () => {
-      isPlayingRef.current = false;
-      setIsPlaying(false);
-      setIsLoading(false);
-      setIsBuffering(false);
-      stopKeepAlive();
-      if ('mediaSession' in navigator) {
-        try {
-          navigator.mediaSession.playbackState = 'paused';
-        } catch {}
+      if (intentStateRef.current === 'paused') {
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+        setIsLoading(false);
+        setIsBuffering(false);
+        if ('mediaSession' in navigator) {
+          try {
+            navigator.mediaSession.playbackState = 'paused';
+          } catch {}
+        }
       }
     };
 
     const handleError = () => {
       const audioEl = audioRef.current;
-      if (!audioEl || !isPlayingRef.current) return;
+      if (!audioEl || intentStateRef.current !== 'playing') return;
 
       // Ignore aborted error during source switches or detaches
       if (audioEl.error && audioEl.error.code === 1) return;
@@ -223,20 +179,19 @@ export function useRadioStream(currentSong?: Song) {
 
       console.warn('Audio stream error event:', audioEl.error?.code, audioEl.error?.message);
 
+      intentStateRef.current = 'paused';
       isPlayingRef.current = false;
       setIsLoading(false);
       setIsBuffering(false);
       setIsPlaying(false);
-      stopKeepAlive();
       setError('Помилка підключення до сервера. Натисніть Play для повтору.');
     };
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && isPlayingRef.current) {
+      if (document.visibilityState === 'visible' && intentStateRef.current === 'playing') {
         if (audio.paused) {
           audio.play().catch(() => {});
         }
-        startKeepAlive();
       }
     };
 
@@ -248,7 +203,6 @@ export function useRadioStream(currentSong?: Song) {
 
     return () => {
       destroyHls();
-      stopKeepAlive();
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
@@ -265,10 +219,11 @@ export function useRadioStream(currentSong?: Song) {
     }
     if (!audio) return;
 
+    intentStateRef.current = 'playing';
+    setIsPlaying(true);
     setIsLoading(true);
     setError(null);
     isPlayingRef.current = true;
-    startKeepAlive();
 
     const activeServer = targetServerId || selectedServerRef.current;
     const targetUrl = getActiveServerUrl(activeServer);
@@ -295,18 +250,31 @@ export function useRadioStream(currentSong?: Song) {
         hls.loadSource(targetUrl);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          audio?.play().then(() => {
-            setIsPlaying(true);
-            setIsLoading(false);
-            setIsBuffering(false);
-            setError(null);
-          }).catch((err) => {
-            console.warn('HLS play rejected:', err);
-            isPlayingRef.current = false;
-            setIsLoading(false);
-            setIsPlaying(false);
-            setError('Помилка відтворення HLS потоку. Натисніть Play для повтору.');
-          });
+          if (intentStateRef.current !== 'playing') return;
+          const p = audio?.play();
+          if (p) {
+            activePlayPromiseRef.current = p;
+            p.then(() => {
+              if (intentStateRef.current === 'playing') {
+                setIsPlaying(true);
+                setIsLoading(false);
+                setIsBuffering(false);
+                setError(null);
+              } else {
+                audio?.pause();
+              }
+            }).catch((err) => {
+              if (err?.name === 'AbortError') return;
+              console.warn('HLS play rejected:', err);
+              if (intentStateRef.current === 'playing') {
+                intentStateRef.current = 'paused';
+                isPlayingRef.current = false;
+                setIsLoading(false);
+                setIsPlaying(false);
+                setError('Помилка відтворення HLS потоку. Натисніть Play для повтору.');
+              }
+            });
+          }
         });
 
         hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -321,6 +289,7 @@ export function useRadioStream(currentSong?: Song) {
                 break;
               default:
                 destroyHls();
+                intentStateRef.current = 'paused';
                 isPlayingRef.current = false;
                 setIsPlaying(false);
                 setIsLoading(false);
@@ -335,20 +304,33 @@ export function useRadioStream(currentSong?: Song) {
         destroyHls();
         if (audio.src !== targetUrl) {
           audio.src = targetUrl;
+          audio.load();
         }
 
-        audio.play().then(() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          setIsBuffering(false);
-          setError(null);
-        }).catch((err: any) => {
-          console.warn('Native HLS play rejected:', err);
-          isPlayingRef.current = false;
-          setIsLoading(false);
-          setIsPlaying(false);
-          setError('Помилка відтворення. Натисніть Play для повтору.');
-        });
+        const p = audio.play();
+        if (p) {
+          activePlayPromiseRef.current = p;
+          p.then(() => {
+            if (intentStateRef.current === 'playing') {
+              setIsPlaying(true);
+              setIsLoading(false);
+              setIsBuffering(false);
+              setError(null);
+            } else {
+              audio?.pause();
+            }
+          }).catch((err: any) => {
+            if (err?.name === 'AbortError') return;
+            console.warn('Native HLS play rejected:', err);
+            if (intentStateRef.current === 'playing') {
+              intentStateRef.current = 'paused';
+              isPlayingRef.current = false;
+              setIsLoading(false);
+              setIsPlaying(false);
+              setError('Помилка відтворення. Натисніть Play для повтору.');
+            }
+          });
+        }
         return;
       }
     }
@@ -357,47 +339,70 @@ export function useRadioStream(currentSong?: Song) {
     destroyHls();
     if (!audio.src || audio.src !== targetUrl) {
       audio.src = targetUrl;
+    } else if (audio.buffered.length > 0) {
+      try {
+        const liveEnd = audio.buffered.end(audio.buffered.length - 1);
+        if (liveEnd > audio.currentTime + 3) {
+          audio.currentTime = liveEnd;
+        }
+      } catch {}
     }
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
+      activePlayPromiseRef.current = playPromise;
       playPromise
         .then(() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          setIsBuffering(false);
-          setError(null);
-          if ('mediaSession' in navigator) {
-            try {
-              navigator.mediaSession.playbackState = 'playing';
-            } catch {}
+          if (intentStateRef.current === 'playing') {
+            setIsPlaying(true);
+            setIsLoading(false);
+            setIsBuffering(false);
+            setError(null);
+            if ('mediaSession' in navigator) {
+              try {
+                navigator.mediaSession.playbackState = 'playing';
+              } catch {}
+            }
+          } else {
+            audio?.pause();
           }
         })
         .catch((err: any) => {
-          console.warn('Playback request rejected:', err?.name, err?.message);
           if (err?.name === 'AbortError') return;
-
-          isPlayingRef.current = false;
-          setIsLoading(false);
-          setIsPlaying(false);
-          setIsBuffering(false);
-          setError('Помилка відтворення. Натисніть Play для повтору.');
+          console.warn('Playback request rejected:', err?.name, err?.message);
+          if (intentStateRef.current === 'playing') {
+            intentStateRef.current = 'paused';
+            isPlayingRef.current = false;
+            setIsLoading(false);
+            setIsPlaying(false);
+            setIsBuffering(false);
+            setError('Помилка відтворення. Натисніть Play для повтору.');
+          }
         });
     }
   }, [volume, isMuted, getActiveServerUrl, destroyHls]);
 
   const pause = useCallback(() => {
+    intentStateRef.current = 'paused';
     isPlayingRef.current = false;
-    stopKeepAlive();
-    destroyHls();
-    if (audioRef.current) {
-      const audio = audioRef.current;
-      audio.pause();
-      audio.removeAttribute('src');
-    }
     setIsPlaying(false);
     setIsLoading(false);
     setIsBuffering(false);
+    destroyHls();
+
+    const audio = audioRef.current;
+    if (audio) {
+      if (activePlayPromiseRef.current) {
+        activePlayPromiseRef.current.finally(() => {
+          if (intentStateRef.current === 'paused') {
+            audio.pause();
+          }
+        });
+      } else {
+        audio.pause();
+      }
+    }
+
     if ('mediaSession' in navigator) {
       try {
         navigator.mediaSession.playbackState = 'paused';
@@ -466,12 +471,12 @@ export function useRadioStream(currentSong?: Song) {
 
   const togglePlay = useCallback(() => {
     setError(null);
-    if (isPlaying) {
+    if (intentStateRef.current === 'playing') {
       pause();
     } else {
       play();
     }
-  }, [isPlaying, play, pause]);
+  }, [play, pause]);
 
   const setVolume = useCallback((val: number) => {
     const clamped = Math.max(0, Math.min(1, val));

@@ -1,6 +1,25 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { NowPlayingResponse, RawNowPlayingJson, SongHistoryItem } from '../types';
 
+const HISTORY_STORAGE_KEY = 'numo_recent_tracks_v1';
+
+function loadCachedHistory(): SongHistoryItem[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.slice(0, 10);
+    }
+  } catch {}
+  return [];
+}
+
+function saveCachedHistory(items: SongHistoryItem[]) {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(items.slice(0, 10)));
+  } catch {}
+}
+
 export function useNowPlaying() {
   const [data, setData] = useState<NowPlayingResponse | null>(null);
   const [localElapsed, setLocalElapsed] = useState<number>(0);
@@ -10,19 +29,28 @@ export function useNowPlaying() {
   // Server clock offset in seconds: serverTimeSec - clientTimeSec
   const serverClockOffsetRef = useRef<number>(0);
   const currentTrackIdRef = useRef<string | null>(null);
-  const historyBufferRef = useRef<SongHistoryItem[]>([]);
+  const historyBufferRef = useRef<SongHistoryItem[]>(loadCachedHistory());
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchNowPlaying = useCallback(async () => {
+    // Abort any pending fetch to prevent racing
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       // Direct cache-bypassing fetch to nowplaying.json
       const url = `https://numo.pp.ua/hls/nowplaying.json?_=${Date.now()}`;
       let res: Response;
       try {
-        res = await fetch(url, { cache: 'no-store' });
+        res = await fetch(url, { cache: 'no-store', signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      } catch {
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         // Fallback proxy fetch if direct fetch fails
-        res = await fetch(`/api/radio/nowplaying?_=${Date.now()}`);
+        res = await fetch(`/api/radio/nowplaying?_=${Date.now()}`, { signal: controller.signal });
         if (!res.ok) throw new Error(`Proxy HTTP ${res.status}`);
       }
 
@@ -69,13 +97,14 @@ export function useNowPlaying() {
             artist,
             title,
             album,
-            genre: 'Electronic / Ambient',
+            genre: 'Deep House / Melodic Techno',
             art: coverUrl,
           },
         };
 
-        const updatedHistory = [newItem, ...historyBufferRef.current.filter((item) => item.song.id !== trackId)].slice(0, 6);
+        const updatedHistory = [newItem, ...historyBufferRef.current.filter((item) => item.song.id !== trackId)].slice(0, 10);
         historyBufferRef.current = updatedHistory;
+        saveCachedHistory(updatedHistory);
       }
 
       // Compute current elapsed time using server clock offset
@@ -88,7 +117,7 @@ export function useNowPlaying() {
           id: 1,
           name: 'NUMO Radio',
           shortcode: 'numo',
-          description: 'Electronic & Ambient Stream',
+          description: 'Deep Electronic Soundscapes',
           frontend: 'hls',
           backend: 'liquidsoap',
           timezone: 'Europe/Kyiv',
@@ -112,7 +141,7 @@ export function useNowPlaying() {
             artist,
             title,
             album,
-            genre: 'Electronic / Ambient',
+            genre: 'Deep House / Melodic Techno',
             art: coverUrl,
           },
         },
@@ -124,17 +153,42 @@ export function useNowPlaying() {
       setData(formattedResponse);
       setIsOnline(true);
       setIsLoading(false);
-    } catch {
-      // Gracefully ignore temporary unwritten/incomplete file errors
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       setIsLoading(false);
     }
   }, []);
 
-  // Poll nowplaying.json every 3 seconds
+  // Adaptive polling: 3s when active/visible, 12s when hidden/minimized to preserve battery
   useEffect(() => {
     fetchNowPlaying();
-    const interval = setInterval(fetchNowPlaying, 3000);
-    return () => clearInterval(interval);
+
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const resetInterval = () => {
+      clearInterval(intervalId);
+      const intervalMs = document.visibilityState === 'visible' ? 3000 : 12000;
+      intervalId = setInterval(fetchNowPlaying, intervalMs);
+    };
+
+    resetInterval();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNowPlaying();
+      }
+      resetInterval();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchNowPlaying]);
 
   // Smooth 1-second elapsed increment

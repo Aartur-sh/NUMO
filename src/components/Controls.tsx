@@ -34,7 +34,7 @@ const VOLUME_NOTCH_COLORS = [
   { bg: 'from-indigo-400 to-indigo-300', glow: 'rgba(129,140,248,0.9)' },
 ];
 
-export const Controls: React.FC<ControlsProps> = ({
+export const Controls: React.FC<ControlsProps> = React.memo(({
   isPlaying,
   isLoading,
   isBuffering,
@@ -204,7 +204,7 @@ export const Controls: React.FC<ControlsProps> = ({
             onClick={handleHistoryClick}
             aria-label="Історія треків"
             title="Переглянути історію ефіру"
-            className="w-[60px] h-[60px] rounded-2xl flex items-center justify-center backdrop-blur-xl border bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg transition-all active:scale-90 cursor-pointer select-none group"
+            className="w-[60px] h-[60px] rounded-2xl flex items-center justify-center bg-[#0d121f]/80 hover:bg-[#0d121f]/95 backdrop-blur-2xl border border-white/20 text-cyan-300 hover:text-cyan-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),0_8px_24px_rgba(0,0,0,0.6)] transition-all active:scale-90 cursor-pointer select-none group"
           >
             <ListMusic className="w-5 h-5 text-cyan-300 group-hover:text-cyan-200 transition-colors" />
           </button>
@@ -222,7 +222,7 @@ export const Controls: React.FC<ControlsProps> = ({
                     y: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
                     scale: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#0d121f]/75 backdrop-blur-2xl border border-white/20 text-cyan-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_32px_rgba(0,0,0,0.85)] text-xs font-medium select-none"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#0d121f]/80 backdrop-blur-2xl border border-white/20 text-cyan-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_32px_rgba(0,0,0,0.85)] text-xs font-medium select-none"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse flex-shrink-0" />
                   <span className="tracking-wide">{lang === 'en' ? 'In development' : 'В розробці'}</span>
@@ -253,29 +253,28 @@ export const Controls: React.FC<ControlsProps> = ({
           >
             {/* Layer 1: Playing Gradient (Cool Cyan/Indigo) */}
             <div
-              className={`absolute inset-0 bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600 transition-opacity duration-500 ease-in-out ${
+              className={`absolute inset-0 bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600 transition-opacity duration-300 ease-in-out ${
                 isPlaying ? 'opacity-100' : 'opacity-0'
               }`}
             />
 
             {/* Layer 2: Paused Gradient (Warm Amber/Rose) */}
             <div
-              className={`absolute inset-0 bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-500 transition-opacity duration-500 ease-in-out ${
+              className={`absolute inset-0 bg-gradient-to-tr from-amber-400 via-orange-500 to-rose-500 transition-opacity duration-300 ease-in-out ${
                 isPlaying ? 'opacity-0' : 'opacity-100'
               }`}
             />
 
-            {/* Overlapping Morphed Icons with Zero Flicker */}
+            {/* Overlapping Morphed Icons with Ironclad Smoothness & Zero Flicker */}
             <div className="relative w-10 h-10 flex items-center justify-center pointer-events-none">
               {/* Pause Icon */}
               <motion.div
                 className="absolute inset-0 flex items-center justify-center text-slate-950"
                 animate={{
-                  opacity: isPlaying && !isLoading && !isBuffering ? 1 : 0,
-                  scale: isPlaying && !isLoading && !isBuffering ? 1 : 0.5,
-                  rotate: isPlaying ? 0 : -35,
+                  opacity: isPlaying ? 1 : 0,
+                  scale: isPlaying ? 1 : 0.7,
                 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Pause className="w-9 h-9 fill-current stroke-none" />
               </motion.div>
@@ -284,26 +283,18 @@ export const Controls: React.FC<ControlsProps> = ({
               <motion.div
                 className="absolute inset-0 flex items-center justify-center text-slate-950 translate-x-0.5"
                 animate={{
-                  opacity: !isPlaying && !isLoading && !isBuffering ? 1 : 0,
-                  scale: !isPlaying && !isLoading && !isBuffering ? 1 : 0.5,
-                  rotate: !isPlaying ? 0 : 35,
+                  opacity: !isPlaying ? 1 : 0,
+                  scale: !isPlaying ? 1 : 0.7,
                 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Play className="w-9 h-9 fill-current stroke-none" />
               </motion.div>
 
-              {/* Buffer / Loading Spinner */}
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center text-slate-950"
-                animate={{
-                  opacity: isLoading || isBuffering ? 1 : 0,
-                  scale: isLoading || isBuffering ? 1 : 0.5,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <Loader2 className="w-9 h-9 animate-spin" />
-              </motion.div>
+              {/* Subtle Loading Spinner Ring around icon if loading/buffering */}
+              {(isLoading || isBuffering) && (
+                <div className="absolute -inset-1 rounded-full border-2 border-white/60 border-t-transparent animate-spin pointer-events-none" />
+              )}
             </div>
           </motion.button>
         </div>
@@ -319,10 +310,10 @@ export const Controls: React.FC<ControlsProps> = ({
               ease: [0.16, 1, 0.3, 1],
             }}
             onPointerDown={handleSliderInteraction}
-            className={`absolute bottom-0 right-0 z-50 flex flex-col items-center justify-end overflow-hidden backdrop-blur-xl border rounded-2xl shadow-2xl shadow-black/80 w-[60px] select-none transition-colors ${
+            className={`absolute bottom-0 right-0 z-50 flex flex-col items-center justify-end overflow-hidden backdrop-blur-2xl border rounded-2xl w-[60px] select-none transition-colors ${
               showVolumeSlider
-                ? 'bg-white/15 border-white/25 text-white'
-                : 'bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg'
+                ? 'bg-[#0d121f]/85 border-white/25 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),0_20px_45px_rgba(0,0,0,0.9)]'
+                : 'bg-[#0d121f]/80 hover:bg-[#0d121f]/95 border-white/20 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),0_8px_24px_rgba(0,0,0,0.6)]'
             }`}
           >
             {/* Upper 10-Level Discrete Slider Zone (Equal distance to top edge & speaker icon: 24px) */}
@@ -405,4 +396,4 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
     </div>
   );
-};
+});

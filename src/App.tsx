@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar } from '@capacitor/status-bar';
 import { useNowPlaying } from './hooks/useNowPlaying';
@@ -70,11 +70,14 @@ export default function App() {
     toggleMute,
   } = useRadioStream(currentSong);
 
-  // Autoplay stream immediately on launch
+  // Autoplay stream once on initial launch
+  const hasAutoplayedRef = useRef(false);
   useEffect(() => {
+    if (hasAutoplayedRef.current) return;
+    hasAutoplayedRef.current = true;
     const timer = setTimeout(() => {
       play();
-    }, 50);
+    }, 100);
     return () => clearTimeout(timer);
   }, [play]);
 
@@ -125,9 +128,6 @@ export default function App() {
     >
       {/* Animated Aurora Gradient Background */}
       <AnimatedBackground isPlaying={isPlaying} />
-
-      {/* Explicit DOM Audio player for Android WebView hardware engine */}
-      <audio id="numo-audio-player" playsInline preload="none" aria-hidden="true" className="hidden" />
 
       {/* 1. Header (height x): Attached to top */}
       <div className="w-full max-w-md flex-shrink-0 z-30">

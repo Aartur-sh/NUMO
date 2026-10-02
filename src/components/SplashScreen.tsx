@@ -6,9 +6,19 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => {
+    try {
+      if (sessionStorage.getItem('numo_splash_shown') === 'true') {
+        return false;
+      }
+    } catch {}
+    return true;
+  });
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem('numo_splash_shown', 'true');
+    } catch {}
     // Show splash for 1.5 seconds, then fade out
     const timer = setTimeout(() => {
       setIsVisible(false);
