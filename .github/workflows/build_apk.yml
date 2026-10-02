@@ -62,9 +62,7 @@ jobs:
             "appId": "com.numoradio.app",
             "appName": "NUMO Radio",
             "webDir": "dist",
-            "server": { "cleartext": true },
             "android": {
-              "allowMixedContent": true,
               "keepRunning": true,
               "backgroundColor": "#070A12"
             },
@@ -110,8 +108,7 @@ jobs:
                   android:label="@string/app_name"
                   android:roundIcon="@mipmap/ic_launcher_round"
                   android:supportsRtl="true"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true">
+                  android:theme="@style/AppTheme">
                   <activity
                       android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
                       android:name=".MainActivity"
@@ -206,7 +203,7 @@ jobs:
                   if (bridge != null && bridge.getWebView() != null) {
                       WebSettings settings = bridge.getWebView().getSettings();
                       settings.setMediaPlaybackRequiresUserGesture(false);
-                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
                       settings.setAllowContentAccess(true);
                       settings.setAllowFileAccess(true);
                   }

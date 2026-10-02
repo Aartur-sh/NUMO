@@ -65,11 +65,11 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left: NUMO Brand with dynamic pulsing 'O' and Track History Button */}
       <div className="relative flex items-center gap-2">
         <div className="flex items-center select-none">
-          {/* Letters N, U, M with Animated Waving Ukrainian Flag Wave dividing blue & yellow */}
+          {/* Letters N, U, M with Signature Cyan to Violet Wave */}
           <div className="relative flex items-center h-6 sm:h-7">
             <svg
-              viewBox="0 0 54 26"
-              className="h-6 sm:h-7 w-auto select-none pointer-events-none drop-shadow-[0_2px_6px_rgba(0,87,183,0.4)]"
+              viewBox="0 0 58 26"
+              className="h-6 sm:h-7 w-auto select-none pointer-events-none drop-shadow-[0_2px_8px_rgba(34,211,238,0.35)]"
             >
               <defs>
                 <clipPath id="numHeaderClip">
@@ -84,50 +84,35 @@ export const Header: React.FC<HeaderProps> = ({
                     NUM
                   </text>
                 </clipPath>
-                <filter id="numSoftBlend">
-                  <feGaussianBlur stdDeviation="1.2" />
-                </filter>
-                <linearGradient id="headerBlue" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#0057b7" />
-                  <stop offset="50%" stopColor="#0077e6" />
-                  <stop offset="100%" stopColor="#38bdf8" />
+                <linearGradient id="headerCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="50%" stopColor="#0284c7" />
+                  <stop offset="100%" stopColor="#818cf8" />
                 </linearGradient>
-                <linearGradient id="headerGold" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ffd700" />
-                  <stop offset="50%" stopColor="#facc15" />
-                  <stop offset="100%" stopColor="#eab308" />
+                <linearGradient id="headerViolet" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#818cf8" />
+                  <stop offset="50%" stopColor="#c084fc" />
+                  <stop offset="100%" stopColor="#e879f9" />
                 </linearGradient>
               </defs>
 
               <g clipPath="url(#numHeaderClip)">
-                {/* Sky blue upper half */}
-                <rect x="0" y="0" width="54" height="26" fill="url(#headerBlue)" />
-                {/* Golden lower half with undulating sine wave dividing line */}
+                <rect x="0" y="0" width="58" height="26" fill="url(#headerCyan)" />
                 <path
                   className="animate-flag-wave"
-                  fill="url(#headerGold)"
+                  fill="url(#headerViolet)"
                   d="M -81 12.5 Q -67.5 8, -54 12.5 T -27 12.5 Q -13.5 8, 0 12.5 T 27 12.5 Q 40.5 8, 54 12.5 T 81 12.5 Q 94.5 8, 108 12.5 T 135 12.5 L 135 30 L -81 30 Z"
-                />
-                {/* Soft Gaussian blur transition band along the wave for smooth color blending */}
-                <path
-                  className="animate-flag-wave"
-                  stroke="#38bdf8"
-                  strokeWidth="3.5"
-                  fill="none"
-                  opacity="0.5"
-                  filter="url(#numSoftBlend)"
-                  d="M -81 12.5 Q -67.5 8, -54 12.5 T -27 12.5 Q -13.5 8, 0 12.5 T 27 12.5 Q 40.5 8, 54 12.5 T 81 12.5 Q 94.5 8, 108 12.5 T 135 12.5"
                 />
               </g>
             </svg>
           </div>
 
-          {/* Interactive Last 'O' */}
+          {/* Interactive Last 'O' (Positioned with 4px clearance so it never overlaps 'M') */}
           <button
             type="button"
             onClick={handleFirstOClick}
             aria-label="Показати кількість онлайн слухачів"
-            className="group relative ml-1 sm:ml-1.5 flex items-center justify-center rounded-full focus:outline-none transition-transform active:scale-90 cursor-pointer"
+            className="group relative ml-1.5 sm:ml-2 flex items-center justify-center rounded-full focus:outline-none transition-transform active:scale-90 cursor-pointer"
           >
             {/* Ambient ripple/aura when online and playing */}
             {isOnline && isPlaying && (

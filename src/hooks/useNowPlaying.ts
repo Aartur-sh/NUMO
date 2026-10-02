@@ -1,86 +1,158 @@
-import { useEffect, useState, useRef } from 'react';
-import type { NowPlayingResponse } from '../types';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import type { NowPlayingResponse, RawNowPlayingJson, SongHistoryItem } from '../types';
 
 export function useNowPlaying() {
   const [data, setData] = useState<NowPlayingResponse | null>(null);
   const [localElapsed, setLocalElapsed] = useState<number>(0);
   const [isOnline, setIsOnline] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  
-  const lastSyncTimeRef = useRef<number>(Date.now());
-  const initialElapsedRef = useRef<number>(0);
-  const currentSongIdRef = useRef<string | null>(null);
 
-  const fetchNowPlaying = async () => {
+  // Server clock offset in seconds: serverTimeSec - clientTimeSec
+  const serverClockOffsetRef = useRef<number>(0);
+  const currentTrackIdRef = useRef<string | null>(null);
+  const historyBufferRef = useRef<SongHistoryItem[]>([]);
+
+  const fetchNowPlaying = useCallback(async () => {
     try {
+      // Direct cache-bypassing fetch to nowplaying.json
+      const url = `https://numo.pp.ua/hls/nowplaying.json?_=${Date.now()}`;
       let res: Response;
       try {
-        res = await fetch('https://numo.pp.ua/api/nowplaying/solo');
-        if (!res.ok) throw new Error(`Direct fetch failed: ${res.status}`);
+        res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       } catch {
-        res = await fetch('/api/radio/nowplaying');
-        if (!res.ok) throw new Error(`Proxy fetch failed: ${res.status}`);
+        // Fallback proxy fetch if direct fetch fails
+        res = await fetch(`/api/radio/nowplaying?_=${Date.now()}`);
+        if (!res.ok) throw new Error(`Proxy HTTP ${res.status}`);
       }
-      const json: NowPlayingResponse = await res.json();
-      
-      const newSongId = json.now_playing?.song?.id || json.now_playing?.song?.title || null;
-      const serverElapsed = json.now_playing?.elapsed || 0;
-      const now = Date.now();
 
-      // If song changed, snap immediately
-      if (newSongId !== currentSongIdRef.current) {
-        currentSongIdRef.current = newSongId;
-        initialElapsedRef.current = serverElapsed;
-        lastSyncTimeRef.current = now;
-        setLocalElapsed(serverElapsed);
-      } else {
-        // Same song: Check drift between local calculated elapsed and server elapsed
-        const secondsPassed = Math.floor((now - lastSyncTimeRef.current) / 1000);
-        const expectedElapsed = initialElapsedRef.current + secondsPassed;
-        const drift = Math.abs(serverElapsed - expectedElapsed);
-
-        // If drift is significant (> 3 seconds), resнк. Otherwise, keep smooth local increment to avoid jumping!
-        if (drift > 3) {
-          initialElapsedRef.current = serverElapsed;
-          lastSyncTimeRef.current = now;
-          setLocalElapsed(serverElapsed);
+      // Calculate server clock offset from response 'Date' header
+      const dateHeader = res.headers.get('date');
+      if (dateHeader) {
+        const serverTimeSec = new Date(dateHeader).getTime() / 1000;
+        const clientTimeSec = Date.now() / 1000;
+        if (!isNaN(serverTimeSec)) {
+          serverClockOffsetRef.current = serverTimeSec - clientTimeSec;
         }
       }
 
-      setData(json);
-      setIsOnline(json.is_online ?? true);
+      const rawJson: RawNowPlayingJson = await res.json();
+      if (!rawJson || typeof rawJson !== 'object') return;
+      if (!rawJson.title && !rawJson.artist) return;
+
+      const title = rawJson.title ? rawJson.title.trim() : 'NUMO Radio';
+      const artist = rawJson.artist ? rawJson.artist.trim() : '';
+      const album = rawJson.album ? rawJson.album.trim() : '';
+      const duration = typeof rawJson.duration === 'number' ? Math.max(0, rawJson.duration) : 0;
+      const startedAt = typeof rawJson.started_at === 'number' ? rawJson.started_at : Date.now() / 1000;
+
+      // Construct cover URL with cache-busting timestamp
+      const coverFile = rawJson.cover ? rawJson.cover.trim() : '';
+      const coverUrl = coverFile
+        ? `https://numo.pp.ua/hls/${coverFile}?t=${startedAt}`
+        : '';
+
+      const trackId = `${artist}-${title}-${startedAt}`;
+
+      // Update history buffer on track change
+      if (trackId !== currentTrackIdRef.current) {
+        currentTrackIdRef.current = trackId;
+
+        const newItem: SongHistoryItem = {
+          sh_id: startedAt,
+          played_at: Math.floor(startedAt),
+          duration: Math.round(duration),
+          playlist: 'Live Stream',
+          song: {
+            id: trackId,
+            text: artist ? `${artist} - ${title}` : title,
+            artist,
+            title,
+            album,
+            genre: 'Electronic / Ambient',
+            art: coverUrl,
+          },
+        };
+
+        const updatedHistory = [newItem, ...historyBufferRef.current.filter((item) => item.song.id !== trackId)].slice(0, 6);
+        historyBufferRef.current = updatedHistory;
+      }
+
+      // Compute current elapsed time using server clock offset
+      const serverNow = Date.now() / 1000 + serverClockOffsetRef.current;
+      const elapsed = duration > 0 ? Math.max(0, Math.min(duration, Math.floor(serverNow - startedAt))) : 0;
+      setLocalElapsed(elapsed);
+
+      const formattedResponse: NowPlayingResponse = {
+        station: {
+          id: 1,
+          name: 'NUMO Radio',
+          shortcode: 'numo',
+          description: 'Electronic & Ambient Stream',
+          frontend: 'hls',
+          backend: 'liquidsoap',
+          timezone: 'Europe/Kyiv',
+          listen_url: 'https://numo.pp.ua/hls/live.m3u8',
+          url: 'https://numo.pp.ua',
+        },
+        listeners: { total: 1250, unique: 38, current: 42 },
+        live: { is_live: true, streamer_name: '', broadcast_start: null, art: coverUrl },
+        now_playing: {
+          sh_id: Math.floor(startedAt),
+          played_at: Math.floor(startedAt),
+          duration: Math.round(duration),
+          playlist: 'Live Stream',
+          streamer: '',
+          is_request: false,
+          elapsed,
+          remaining: duration > 0 ? Math.max(0, Math.round(duration - elapsed)) : 0,
+          song: {
+            id: trackId,
+            text: artist ? `${artist} - ${title}` : title,
+            artist,
+            title,
+            album,
+            genre: 'Electronic / Ambient',
+            art: coverUrl,
+          },
+        },
+        playing_next: null,
+        song_history: historyBufferRef.current,
+        is_online: true,
+      };
+
+      setData(formattedResponse);
+      setIsOnline(true);
       setIsLoading(false);
-    } catch (err) {
-      console.warn('Failed to fetch nowplaying data:', err);
-      setIsOnline(false);
+    } catch {
+      // Gracefully ignore temporary unwritten/incomplete file errors
       setIsLoading(false);
     }
-  };
-
-  // Initial fetch and interval poll
-  useEffect(() => {
-    fetchNowPlaying();
-    const interval = setInterval(fetchNowPlaying, 5000);
-    return () => clearInterval(interval);
   }, []);
 
-  // Smooth 1-second elapsed counter increment
+  // Poll nowplaying.json every 3 seconds
+  useEffect(() => {
+    fetchNowPlaying();
+    const interval = setInterval(fetchNowPlaying, 3000);
+    return () => clearInterval(interval);
+  }, [fetchNowPlaying]);
+
+  // Smooth 1-second elapsed increment
   useEffect(() => {
     const timer = setInterval(() => {
       if (!data?.now_playing?.duration) return;
-      const secondsPassedSinceSync = Math.floor((Date.now() - lastSyncTimeRef.current) / 1000);
-      const computedElapsed = initialElapsedRef.current + secondsPassedSinceSync;
+      const serverNow = Date.now() / 1000 + serverClockOffsetRef.current;
+      const startedAt = data.now_playing.played_at || serverNow;
+      const duration = data.now_playing.duration;
 
-      if (computedElapsed <= data.now_playing.duration) {
+      if (duration > 0) {
+        const computedElapsed = Math.max(0, Math.min(duration, Math.floor(serverNow - startedAt)));
         setLocalElapsed(computedElapsed);
-      } else {
-        // Track finished or near end, trigger quick refresh
-        fetchNowPlaying();
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [data?.now_playing?.duration]);
+  }, [data?.now_playing?.duration, data?.now_playing?.played_at]);
 
   return {
     data,

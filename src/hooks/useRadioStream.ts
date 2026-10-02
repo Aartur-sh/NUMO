@@ -15,21 +15,19 @@ export interface ServerOption {
 export const STREAM_SERVERS: ServerOption[] = [
   {
     id: 'server1',
-    nameUk: 'Основний сервер (HTTPS)',
-    nameEn: 'Primary Server (HTTPS)',
-    url: 'https://numo.pp.ua/listen/solo/radio.mp3',
-    descUk: 'numo.pp.ua • HTTPS потік',
-    descEn: 'numo.pp.ua • HTTPS Stream',
+    nameUk: 'MP3',
+    nameEn: 'MP3',
+    url: 'https://numo.pp.ua/icecast/stream',
+    descUk: 'Icecast MP3 • Потік',
+    descEn: 'Icecast MP3 • Stream',
   },
   {
     id: 'server2',
-    nameUk: 'Резервний сервер (IP)',
-    nameEn: 'Backup Server (IP Direct)',
-    url: typeof window !== 'undefined' && window.location?.protocol === 'https:'
-      ? '/api/radio/stream?server=server2'
-      : 'http://144.24.190.71:8000/stream',
-    descUk: '144.24.190.71:8000 • Резервний потік',
-    descEn: '144.24.190.71:8000 • Backup Stream',
+    nameUk: 'HLS',
+    nameEn: 'HLS',
+    url: 'https://numo.pp.ua/hls/live.m3u8',
+    descUk: 'HLS Live • Потік',
+    descEn: 'HLS Live • Stream',
   },
 ];
 
@@ -78,7 +76,7 @@ export function useRadioStream(currentSong?: Song) {
     return opt ? opt.url : STREAM_SERVERS[0].url;
   }, []);
 
-  // Initialize or attach to real DOM audio element
+  // Initialize DOM audio player
   useEffect(() => {
     let audio = document.getElementById('numo-audio-player') as HTMLAudioElement;
     if (!audio) {
@@ -131,20 +129,16 @@ export function useRadioStream(currentSong?: Song) {
         return;
       }
 
-      const mediaError = audioEl.error;
-      if (mediaError && mediaError.code === 1) {
-        return;
-      }
+      console.warn('Audio stream error event:', audioEl.error?.code, audioEl.error?.message);
 
-      console.warn('Audio stream error event:', mediaError?.code, mediaError?.message);
+      // Try fallback server stream
+      const activeUrl = getActiveServerUrl(selectedServer);
+      const fallbackUrl = selectedServer === 'server1' ? STREAM_SERVERS[1].url : STREAM_SERVERS[0].url;
 
-      // Try fallback stream on primary server error
-      const fallbackUrl = STREAM_SERVERS[1].url;
       if (audioEl.src !== fallbackUrl) {
-        console.log('Switching to backup server stream...');
+        console.log('Switching to fallback server stream...');
         audioEl.src = fallbackUrl;
-        audioEl.play().catch((err) => {
-          console.warn('Backup stream failed:', err);
+        audioEl.play().catch(() => {
           isPlayingRef.current = false;
           setIsLoading(false);
           setIsBuffering(false);
@@ -166,47 +160,40 @@ export function useRadioStream(currentSong?: Song) {
     audio.addEventListener('error', handleError);
 
     return () => {
-      if (fadeIntervalRef.current) {
-        clearInterval(fadeIntervalRef.current);
-        fadeIntervalRef.current = null;
-      }
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('error', handleError);
-      audio.pause();
-      audio.removeAttribute('src');
     };
-  }, []);
+  }, [selectedServer, getActiveServerUrl]);
 
-  // Update MediaSession on track change
+  // Update MediaSession on track or play state change for Android Lockscreen & Notification Banner
   useEffect(() => {
-    if ('mediaSession' in navigator && currentSong) {
-      const artUrl = currentSong.art
-        ? (currentSong.art.startsWith('http') ? currentSong.art : `/api/radio/art?url=${encodeURIComponent(currentSong.art)}`)
+    if ('mediaSession' in navigator) {
+      const title = currentSong?.title || 'NUMO Radio';
+      const artist = currentSong?.artist || 'Electronic & Ambient';
+      const album = currentSong?.album || 'NUMO Live Stream';
+      const artUrl = currentSong?.art && currentSong.art.length > 5
+        ? currentSong.art
         : '/pwa-512x512.png';
 
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentSong.title || 'NUMO Radio',
-        artist: currentSong.artist || 'Online Stream',
-        album: currentSong.album || 'NUMO Live',
+        title,
+        artist,
+        album,
         artwork: [
           { src: artUrl, sizes: '512x512', type: 'image/jpeg' },
           { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
         ],
       });
 
-      navigator.mediaSession.setActionHandler('play', () => {
-        play();
-      });
-      navigator.mediaSession.setActionHandler('pause', () => {
-        pause();
-      });
-      navigator.mediaSession.setActionHandler('stop', () => {
-        pause();
-      });
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+      navigator.mediaSession.setActionHandler('play', () => { play(); });
+      navigator.mediaSession.setActionHandler('pause', () => { pause(); });
+      navigator.mediaSession.setActionHandler('stop', () => { pause(); });
     }
-  }, [currentSong]);
+  }, [currentSong, isPlaying]);
 
   const play = useCallback(() => {
     let audio = audioRef.current;
@@ -221,8 +208,6 @@ export function useRadioStream(currentSong?: Song) {
     isPlayingRef.current = true;
 
     const targetUrl = getActiveServerUrl(selectedServer);
-
-    // Set audio source if not already active
     if (!audio.src || audio.src !== targetUrl) {
       audio.src = targetUrl;
     }
@@ -237,16 +222,18 @@ export function useRadioStream(currentSong?: Song) {
           setIsLoading(false);
           setIsBuffering(false);
           setError(null);
+          if ('mediaSession' in navigator) {
+            try {
+              navigator.mediaSession.playbackState = 'playing';
+            } catch {}
+          }
         })
         .catch((err: any) => {
           console.warn('Playback request rejected:', err?.name, err?.message);
-          if (err?.name === 'AbortError') {
-            return;
-          }
+          if (err?.name === 'AbortError') return;
 
           const fallbackUrl = selectedServer === 'server1' ? STREAM_SERVERS[1].url : STREAM_SERVERS[0].url;
           if (audio && audio.src !== fallbackUrl) {
-            console.log('Attempting server fallback after rejection...');
             audio.src = fallbackUrl;
             audio.play()
               .then(() => {
@@ -279,10 +266,14 @@ export function useRadioStream(currentSong?: Song) {
     isPlayingRef.current = false;
     const audio = audioRef.current;
     audio.pause();
-    audio.removeAttribute('src');
     setIsPlaying(false);
     setIsLoading(false);
     setIsBuffering(false);
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = 'paused';
+      } catch {}
+    }
   }, []);
 
   const selectServer = useCallback((serverId: ServerId) => {
@@ -395,6 +386,7 @@ export function useRadioStream(currentSong?: Song) {
     selectServer,
     error,
     togglePlay,
+    play,
     pause,
     setVolume,
     toggleMute,

@@ -253,16 +253,60 @@ export const Artwork: React.FC<ArtworkProps> = ({
   isBuffering,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [isCoverReady, setIsCoverReady] = useState(false);
+  const userSwitchedRef = useRef(false);
 
   // View mode: 'cover' (artwork) or 'turntable' (spinning vinyl player)
-  const [viewMode, setViewMode] = useState<'cover' | 'turntable'>(() => {
-    return (localStorage.getItem('numo_artwork_view') as 'cover' | 'turntable') || 'cover';
-  });
+  const [viewMode, setViewMode] = useState<'cover' | 'turntable'>('turntable');
 
   // Equalizer style: 'spectrum' (28-band studio rods) | 'laser' (neon laser wave) | 'off' (disabled)
   const [equalizerMode, setEqualizerMode] = useState<'spectrum' | 'laser' | 'off'>(() => {
     return (localStorage.getItem('numo_eq_style') as 'spectrum' | 'laser' | 'off') || 'spectrum';
   });
+
+  // Direct image preloader: keep turntable player visible until cover image is 100% loaded
+  const resolvedArtUrl = artUrl
+    ? (artUrl.startsWith('https://') || artUrl.startsWith('http://') ? artUrl : `/api/radio/art?url=${encodeURIComponent(artUrl)}`)
+    : null;
+
+  useEffect(() => {
+    if (!resolvedArtUrl) {
+      setIsCoverReady(false);
+      setImageError(false);
+      if (!userSwitchedRef.current) {
+        setViewMode('turntable');
+      }
+      return;
+    }
+
+    let isMounted = true;
+    setImageError(false);
+    setIsCoverReady(false);
+
+    const img = new Image();
+    img.src = resolvedArtUrl;
+    img.onload = () => {
+      if (isMounted) {
+        setIsCoverReady(true);
+        if (!userSwitchedRef.current) {
+          setViewMode('cover');
+        }
+      }
+    };
+    img.onerror = () => {
+      if (isMounted) {
+        setImageError(true);
+        setIsCoverReady(false);
+        if (!userSwitchedRef.current) {
+          setViewMode('turntable');
+        }
+      }
+    };
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedArtUrl]);
 
   // Swipe gesture detection
   const touchStartXRef = useRef<number | null>(null);
@@ -287,11 +331,8 @@ export const Artwork: React.FC<ArtworkProps> = ({
   };
 
   const toggleViewMode = () => {
-    setViewMode((prev) => {
-      const next = prev === 'cover' ? 'turntable' : 'cover';
-      localStorage.setItem('numo_artwork_view', next);
-      return next;
-    });
+    userSwitchedRef.current = true;
+    setViewMode((prev) => (prev === 'cover' ? 'turntable' : 'cover'));
   };
 
   const toggleEqualizerMode = (e: React.MouseEvent) => {
@@ -305,11 +346,6 @@ export const Artwork: React.FC<ArtworkProps> = ({
       return next;
     });
   };
-
-  // Use direct URL if https, otherwise fallback to local proxy if available
-  const resolvedArtUrl = artUrl
-    ? (artUrl.startsWith('https://') ? artUrl : `/api/radio/art?url=${encodeURIComponent(artUrl)}`)
-    : null;
 
   return (
     <div className="relative w-full flex items-center justify-center my-0 py-0">
@@ -340,53 +376,33 @@ export const Artwork: React.FC<ArtworkProps> = ({
             
             {/* View Switching Transition between Cover Art and Vinyl Player */}
             <AnimatePresence mode="wait" initial={false}>
-              {viewMode === 'cover' ? (
+              {viewMode === 'cover' && isCoverReady && resolvedArtUrl && !imageError ? (
                 <motion.div
                   key="cover-view"
-                  initial={false}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full relative flex items-center justify-center overflow-hidden bg-slate-900"
+                  initial={{ opacity: 0, y: -24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 24 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full h-full relative flex items-center justify-center overflow-hidden bg-slate-900 z-10"
                 >
-                  {resolvedArtUrl && !imageError ? (
-                    <img
-                      src={resolvedArtUrl}
-                      alt={songTitle || 'NUMO Radio'}
-                      onError={() => setImageError(true)}
-                      className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
-                        isPlaying ? 'scale-105' : 'scale-100'
-                      }`}
-                    />
-                  ) : (
-                    /* Fallback vinyl cover */
-                    <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 select-none">
-                      <div
-                        className={`relative flex items-center justify-center w-48 h-48 sm:w-56 sm:h-56 rounded-full border border-white/10 bg-slate-950/80 shadow-inner ${
-                          isPlaying ? 'animate-[spin_16s_linear_infinite]' : ''
-                        }`}
-                      >
-                        <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
-                          <Radio className="w-8 h-8 animate-pulse" />
-                        </div>
-                      </div>
-                      <div className="mt-4 text-center">
-                        <span className="text-sm font-black tracking-widest text-white/90 uppercase font-sans">
-                          NUMO RADIO
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                  <img
+                    src={resolvedArtUrl}
+                    alt={songTitle || 'NUMO Radio'}
+                    onError={() => setImageError(true)}
+                    className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+                      isPlaying ? 'scale-105' : 'scale-100'
+                    }`}
+                  />
                 </motion.div>
               ) : (
-                /* Interactive High-End Vinyl Turntable Player with handwritten marker "NUMO Radio" on black vinyl */
+                /* Interactive High-End Vinyl Turntable Player (Default on launch & while cover is loading) */
                 <motion.div
                   key="turntable-view"
-                  initial={false}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full h-full relative"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -24 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full h-full relative z-0"
                 >
                   <VinylTurntablePlayer isPlaying={isPlaying} />
                 </motion.div>

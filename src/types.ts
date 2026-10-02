@@ -1,3 +1,12 @@
+export interface RawNowPlayingJson {
+  artist: string;
+  title: string;
+  album: string;
+  duration: number;
+  started_at: number;
+  cover: string;
+}
+
 export interface Song {
   id: string;
   text: string;
@@ -21,22 +30,13 @@ export interface NowPlayingCurrent {
   remaining: number;
 }
 
-export interface PlayingNext {
-  cued_at: number;
-  played_at: number;
-  duration: number;
-  playlist: string;
-  is_request: boolean;
-  song: Song;
-}
-
 export interface SongHistoryItem {
   sh_id: number;
   played_at: number;
   duration: number;
-  playlist: string;
-  streamer: string;
-  is_request: boolean;
+  playlist?: string;
+  streamer?: string;
+  is_request?: boolean;
   song: Song;
 }
 
@@ -44,17 +44,6 @@ export interface Listeners {
   total: number;
   unique: number;
   current: number;
-}
-
-export interface Mount {
-  id: number;
-  name: string;
-  url: string;
-  bitrate: number;
-  format: string;
-  listeners: Listeners;
-  path: string;
-  is_default: boolean;
 }
 
 export interface Station {
@@ -67,11 +56,6 @@ export interface Station {
   timezone: string;
   listen_url: string;
   url: string;
-  public_player_url: string;
-  playlist_pls_url: string;
-  playlist_m3u_url: string;
-  is_public: boolean;
-  mounts: Mount[];
 }
 
 export interface NowPlayingResponse {
@@ -84,7 +68,7 @@ export interface NowPlayingResponse {
     art: string | null;
   };
   now_playing: NowPlayingCurrent;
-  playing_next: PlayingNext | null;
+  playing_next: null;
   song_history: SongHistoryItem[];
   is_online: boolean;
 }

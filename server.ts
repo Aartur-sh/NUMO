@@ -1,7 +1,6 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import http from 'http';
 import https from 'https';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,19 +9,19 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// AzuraCast public API base
-const AZURACAST_BASE = 'https://numo.pp.ua';
+// NUMO Radio Server Base
+const NUMO_BASE = 'https://numo.pp.ua';
 
-// In-memory cache for now-playing to prevent hitting AzuraCast on every client poll
+// In-memory cache for now-playing
 let nowPlayingCache: { data: any; timestamp: number } | null = null;
-const CACHE_TTL_MS = 8000; // 8 seconds cache
+const CACHE_TTL_MS = 3000; // 3 seconds cache
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// Proxy endpoint for nowplaying data
+// Proxy endpoint for nowplaying JSON
 app.get('/api/radio/nowplaying', async (_req, res) => {
   const now = Date.now();
   if (nowPlayingCache && now - nowPlayingCache.timestamp < CACHE_TTL_MS) {
@@ -30,92 +29,51 @@ app.get('/api/radio/nowplaying', async (_req, res) => {
   }
 
   try {
-    const response = await fetch(`${AZURACAST_BASE}/api/nowplaying/solo`, {
+    const response = await fetch(`${NUMO_BASE}/hls/nowplaying.json?_=${now}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'NumoRadioApp/1.0',
+        'Cache-Control': 'no-store',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`AzuraCast responded with status ${response.status}`);
+      throw new Error(`Server responded with status ${response.status}`);
     }
 
     const data = await response.json();
     nowPlayingCache = { data, timestamp: now };
     return res.json(data);
   } catch (error: any) {
-    console.error('Error fetching nowplaying from AzuraCast:', error?.message);
+    console.error('Error fetching nowplaying:', error?.message);
     if (nowPlayingCache) {
       return res.json(nowPlayingCache.data);
     }
-    return res.json({
-      is_online: true,
-      listeners: { current: 42, unique: 38, total: 1250 },
-      now_playing: {
-        sh_id: 1,
-        played_at: Math.floor(Date.now() / 1000) - 60,
-        duration: 210,
-        elapsed: 60,
-        song: {
-          id: 'fallback-song',
-          text: 'NUMO Radio - Live Stream',
-          artist: 'NUMO Radio',
-          title: 'Ambient & Electronic Live',
-          art: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
-        },
-      },
-      playing_next: {
-        cued_at: 0,
-        duration: 180,
-        song: {
-          id: 'fallback-next',
-          title: 'Chillout Session',
-          artist: 'NUMO Radio',
-        },
-      },
-      station: {
-        name: 'NUMO Radio',
-        listen_url: 'https://numo.pp.ua/listen/solo/radio.mp3',
-        mounts: [{ bitrate: 192, format: 'mp3' }]
-      }
+    return res.status(502).json({
+      artist: 'NUMO Radio',
+      title: 'Electronic & Ambient Live',
+      album: 'Live Stream',
+      duration: 0,
+      started_at: Math.floor(Date.now() / 1000),
+      cover: '',
     });
   }
 });
 
-// Proxy endpoint for audio stream (prevents Mixed Content HTTP-on-HTTPS errors)
+// Proxy endpoint for audio stream (strict HTTPS)
 app.get('/api/radio/stream', (req, res) => {
   const serverParam = req.query.server as string;
-  let streamUrl = `${AZURACAST_BASE}/listen/solo/radio.mp3`;
+  let streamUrl = `${NUMO_BASE}/icecast/stream`;
 
-  if (serverParam === 'server2') {
-    streamUrl = 'http://144.24.190.71:8000/stream';
+  if (serverParam === 'server2' || serverParam === 'hls') {
+    streamUrl = `${NUMO_BASE}/hls/live.m3u8`;
   }
 
   // Avoid socket timeout during continuous radio listening
   req.socket.setTimeout(0);
   res.socket?.setTimeout(0);
 
-  const client = streamUrl.startsWith('https') ? https : http;
-  const streamReq = client.get(streamUrl, (streamRes) => {
-    // Handle Icecast redirects (301/302)
-    if (streamRes.statusCode && streamRes.statusCode >= 300 && streamRes.statusCode < 400 && streamRes.headers.location) {
-      const redirectUrl = streamRes.headers.location;
-      const redirectClient = redirectUrl.startsWith('https') ? https : http;
-      redirectClient.get(redirectUrl, (redRes) => {
-        res.setHeader('Content-Type', redRes.headers['content-type'] || 'audio/mpeg');
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.setHeader('Connection', 'keep-alive');
-        redRes.pipe(res);
-      }).on('error', (err) => {
-        console.error('Redirect stream proxy error:', err.message);
-        if (!res.headersSent) res.status(502).send('Error connecting to radio stream');
-      });
-      return;
-    }
-
+  const streamReq = https.get(streamUrl, (streamRes) => {
     res.setHeader('Content-Type', streamRes.headers['content-type'] || 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -145,21 +103,15 @@ app.get('/api/radio/stream', (req, res) => {
   });
 });
 
-// Proxy for album art image
+// Proxy for album art image (strict HTTPS allowlist)
 app.get('/api/radio/art', async (req, res) => {
   const artUrl = req.query.url as string;
   if (!artUrl || typeof artUrl !== 'string') {
     return res.status(400).send('Missing url parameter');
   }
 
-  // Security check: only allow proxying from the station server
-  if (
-    !artUrl.startsWith(AZURACAST_BASE) &&
-    !artUrl.startsWith('https://numo.pp.ua') &&
-    !artUrl.startsWith('http://numo.pp.ua') &&
-    !artUrl.startsWith('http://144.24.190.71') &&
-    !artUrl.startsWith('http://193.122.11.33')
-  ) {
+  // Security check: only allow proxying from strict HTTPS station server
+  if (!artUrl.startsWith(NUMO_BASE) && !artUrl.startsWith('https://numo.pp.ua')) {
     return res.status(403).send('Forbidden art source');
   }
 

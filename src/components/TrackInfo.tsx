@@ -212,29 +212,31 @@ export const TrackInfo: React.FC<TrackInfoProps> = ({
         {artist || '\u00A0'}
       </p>
 
-      {/* Duration Bar & Timers */}
-      <div className="w-full mt-1.5 px-1">
-        {/* Progress track */}
-        <div className="relative w-full h-1.5 sm:h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
-          {totalDuration > 0 ? (
+      {/* Duration Bar & Timers (Only shown when totalDuration > 0; hidden when duration === 0) */}
+      {totalDuration > 0 ? (
+        <div className="w-full mt-1.5 px-1">
+          {/* Progress track */}
+          <div className="relative w-full h-1.5 sm:h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
             <motion.div
               className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.6)]"
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.8, ease: 'linear' }}
             />
-          ) : (
-            <div className="w-full h-full bg-cyan-400/40 animate-pulse" />
-          )}
-        </div>
+          </div>
 
-        {/* Timers Row without blinking NUMO text */}
-        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 mt-1 px-0.5">
-          <span>{totalDuration > 0 ? formatTime(elapsedSeconds) : '00:00'}</span>
-          <span>
-            {totalDuration > 0 ? formatTime(totalDuration) : '24/7'}
+          {/* Timers Row */}
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 mt-1 px-0.5 font-mono">
+            <span>{formatTime(elapsedSeconds)}</span>
+            <span>{formatTime(totalDuration)}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full mt-1.5 px-1 flex items-center justify-center min-h-[22px]">
+          <span className="text-[10px] font-bold text-cyan-300/80 uppercase tracking-widest bg-cyan-950/40 px-2.5 py-0.5 rounded-full border border-cyan-400/20">
+            24/7 Live Stream
           </span>
         </div>
-      </div>
+      )}
     </div>
   );
 };
