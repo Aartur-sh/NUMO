@@ -1,110 +1,154 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Deep Obsidian Radial Background (Material 3 Expressive) -->
-    <radialGradient id="numoBg" cx="50%" cy="50%" r="75%">
-      <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="60%" stop-color="#080C16" />
-      <stop offset="100%" stop-color="#03050A" />
+    <!-- Deep Obsidian Pitch Black Background -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#0c1220" />
+      <stop offset="60%" stop-color="#05070d" />
+      <stop offset="100%" stop-color="#000000" />
     </radialGradient>
 
-    <!-- Electric Cyan to Royal Sky Gradient (Left 'N' Pillar) -->
-    <linearGradient id="cyanPillar" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="50%" stop-color="#0284C7" />
-      <stop offset="100%" stop-color="#0369A1" />
-    </linearGradient>
-
-    <!-- Deep Indigo to Neon Violet Gradient (Right 'N' Pillar) -->
-    <linearGradient id="violetPillar" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#C084FC" />
-      <stop offset="50%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#4F46E5" />
-    </linearGradient>
-
-    <!-- Interwoven Fluid Ribbon (Cyan -> Indigo -> Violet Wave) -->
-    <linearGradient id="numoWave" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="35%" stop-color="#0284C7" />
-      <stop offset="70%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#C084FC" />
-    </linearGradient>
-
-    <!-- Glowing Core Ring ('O' Vinyl Hub) -->
-    <linearGradient id="vinylRing" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="50%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#C084FC" />
-    </linearGradient>
-
-    <!-- Material 3 Expressive Metallic Outer Bevel -->
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.85" />
-      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.5" />
-      <stop offset="100%" stop-color="#C084FC" stop-opacity="0.85" />
-    </linearGradient>
-
-    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="14" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+    <!-- Neon Cyan & Sky Glow Filter (Left Equalizer Pillar) -->
+    <filter id="cyanGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#22d3ee" flood-opacity="0.85" />
+      <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#0ea5e9" flood-opacity="0.5" />
     </filter>
 
-    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.85" />
+    <!-- Deep Indigo & Violet Glow Filter (Diagonal Equalizer Stroke) -->
+    <filter id="indigoGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#818cf8" flood-opacity="0.8" />
+      <feDropShadow dx="0" dy="0" stdDeviation="22" flood-color="#6366f1" flood-opacity="0.45" />
     </filter>
+
+    <!-- Vibrant Magenta & Pink Glow Filter (Right Equalizer Pillar) -->
+    <filter id="magentaGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#ec4899" flood-opacity="0.85" />
+      <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#f43f5e" flood-opacity="0.5" />
+    </filter>
+
+    <!-- Subtle Metallic Outer Border Gradient -->
+    <linearGradient id="borderBevel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#818cf8" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.6" />
+    </linearGradient>
   </defs>
 
-  <!-- Background Material Expressive Squircle -->
-  <rect width="512" height="512" rx="128" fill="url(#numoBg)" />
-  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#borderGrad)" stroke-width="2.5" />
+  <!-- 1. Pure Obsidian Squircle Container -->
+  <rect width="512" height="512" rx="128" fill="#000000" />
+  <rect width="512" height="512" rx="128" fill="url(#bgGlow)" />
+  <rect x="2" y="2" width="508" height="508" rx="126" fill="none" stroke="url(#borderBevel)" stroke-width="3" opacity="0.65" />
 
-  <!-- Equalizer Frequencies & Orbital Soundwave Rings in Background -->
-  <circle cx="256" cy="256" r="185" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.15" stroke-dasharray="6 10" />
-  <circle cx="256" cy="256" r="145" fill="none" stroke="#818CF8" stroke-width="1.5" stroke-opacity="0.15" stroke-dasharray="4 8" />
+  <!-- 2. Ambient Atmosphere behind Letter 'N' -->
+  <ellipse cx="140" cy="256" rx="90" ry="140" fill="#0284c7" opacity="0.12" filter="blur(30px)" />
+  <ellipse cx="256" cy="256" rx="100" ry="100" fill="#6366f1" opacity="0.14" filter="blur(32px)" />
+  <ellipse cx="372" cy="256" rx="90" ry="140" fill="#db2777" opacity="0.12" filter="blur(30px)" />
 
-  <!-- Equalizer Frequencies in Cyan/Indigo/Violet -->
-  <g opacity="0.35">
-    <rect x="72" y="210" width="6" height="92" rx="3" fill="#38BDF8" />
-    <rect x="86" y="170" width="6" height="172" rx="3" fill="#38BDF8" />
-    <rect x="100" y="230" width="6" height="52" rx="3" fill="#38BDF8" />
-    <rect x="406" y="230" width="6" height="52" rx="3" fill="#C084FC" />
-    <rect x="420" y="170" width="6" height="172" rx="3" fill="#C084FC" />
-    <rect x="434" y="210" width="6" height="92" rx="3" fill="#C084FC" />
+  <!-- 
+    3. THE LETTER 'N' EQUALIZER LOGO
+    Consists of 3 Equalizer Bars / Columns:
+    - Pillar 1 (Left): Electric Cyan Segmented Vertical Equalizer
+    - Pillar 2 (Diagonal): Chromatic Indigo-Violet Segmented Diagonal Equalizer
+    - Pillar 3 (Right): Vibrant Magenta-Pink Segmented Vertical Equalizer
+  -->
+  <g id="letterN-Equalizer">
+    
+    <!-- ============================================== -->
+    <!-- PILLAR 1: LEFT VERTICAL EQUALIZER (x: 114..162, y: 104..408) -->
+    <!-- ============================================== -->
+    <g id="leftEqualizerPillar">
+      <!-- Segment 1 (Base) -->
+      <rect x="114" y="372" width="48" height="30" rx="10" fill="#0284c7" stroke="#082f49" stroke-width="1.5" />
+      <!-- Segment 2 -->
+      <rect x="114" y="334" width="48" height="30" rx="10" fill="#0369a1" stroke="#0c4a6e" stroke-width="1.5" />
+      <!-- Segment 3 -->
+      <rect x="114" y="296" width="48" height="30" rx="10" fill="#0284c7" stroke="#0369a1" stroke-width="1.5" />
+      <!-- Segment 4 -->
+      <rect x="114" y="258" width="48" height="30" rx="10" fill="#0ea5e9" stroke="#0284c7" stroke-width="1.5" />
+      <!-- Segment 5 -->
+      <rect x="114" y="220" width="48" height="30" rx="10" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" />
+      <!-- Segment 6 -->
+      <rect x="114" y="182" width="48" height="30" rx="10" fill="#38bdf8" stroke="#0ea5e9" stroke-width="1.5" />
+      <!-- Segment 7 -->
+      <rect x="114" y="144" width="48" height="30" rx="10" fill="#38bdf8" stroke="#0ea5e9" stroke-width="1.5" />
+      <!-- Segment 8 (Peak Glowing Cyan LED) -->
+      <rect x="114" y="106" width="48" height="30" rx="10" fill="#a5f3fc" filter="url(#cyanGlow)" />
+      
+      <!-- Top VU Peak Indicator Dot -->
+      <circle cx="138" cy="86" r="4.5" fill="#38bdf8" filter="url(#cyanGlow)" />
+    </g>
+
+    <!-- ============================================== -->
+    <!-- PILLAR 2: DIAGONAL EQUALIZER (from ~(168,138) to ~(344,374)) -->
+    <!-- ============================================== -->
+    <g id="diagonalEqualizerStroke">
+      <!-- Diag Segment 1 (Top-Left, Sky Blue) -->
+      <g transform="translate(176, 142) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#38bdf8" stroke="#0284c7" stroke-width="1.5" />
+      </g>
+      
+      <!-- Diag Segment 2 (Sky-Royal) -->
+      <g transform="translate(202, 178) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#60a5fa" stroke="#2563eb" stroke-width="1.5" />
+      </g>
+      
+      <!-- Diag Segment 3 (Royal Blue) -->
+      <g transform="translate(228, 214) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5" />
+      </g>
+      
+      <!-- Diag Segment 4 (Indigo Center Core) -->
+      <g transform="translate(256, 256) rotate(38)">
+        <rect x="-24" y="-15" width="48" height="30" rx="10" fill="#818cf8" filter="url(#indigoGlow)" />
+      </g>
+
+      <!-- Diag Segment 5 (Deep Indigo) -->
+      <g transform="translate(284, 298) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#6366f1" stroke="#4338ca" stroke-width="1.5" />
+      </g>
+
+      <!-- Diag Segment 6 (Electric Violet) -->
+      <g transform="translate(310, 334) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#a855f7" stroke="#7e22ce" stroke-width="1.5" />
+      </g>
+
+      <!-- Diag Segment 7 (Bottom-Right Violet-Magenta) -->
+      <g transform="translate(336, 370) rotate(38)">
+        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#c084fc" stroke="#9333ea" stroke-width="1.5" />
+      </g>
+    </g>
+
+    <!-- ============================================== -->
+    <!-- PILLAR 3: RIGHT VERTICAL EQUALIZER (x: 350..398, y: 104..408) -->
+    <!-- ============================================== -->
+    <g id="rightEqualizerPillar">
+      <!-- Segment 1 (Base) -->
+      <rect x="350" y="372" width="48" height="30" rx="10" fill="#701a75" stroke="#4a044e" stroke-width="1.5" />
+      <!-- Segment 2 -->
+      <rect x="350" y="334" width="48" height="30" rx="10" fill="#86198f" stroke="#581c87" stroke-width="1.5" />
+      <!-- Segment 3 -->
+      <rect x="350" y="296" width="48" height="30" rx="10" fill="#a21caf" stroke="#701a75" stroke-width="1.5" />
+      <!-- Segment 4 -->
+      <rect x="350" y="258" width="48" height="30" rx="10" fill="#c026d3" stroke="#86198f" stroke-width="1.5" />
+      <!-- Segment 5 -->
+      <rect x="350" y="220" width="48" height="30" rx="10" fill="#d946ef" stroke="#a21caf" stroke-width="1.5" />
+      <!-- Segment 6 -->
+      <rect x="350" y="182" width="48" height="30" rx="10" fill="#ec4899" stroke="#be185d" stroke-width="1.5" />
+      <!-- Segment 7 -->
+      <rect x="350" y="144" width="48" height="30" rx="10" fill="#f43f5e" stroke="#db2777" stroke-width="1.5" />
+      <!-- Segment 8 (Peak Glowing Pink/Magenta LED) -->
+      <rect x="350" y="106" width="48" height="30" rx="10" fill="#ffe4e6" filter="url(#magentaGlow)" />
+
+      <!-- Top VU Peak Indicator Dot -->
+      <circle cx="374" cy="86" r="4.5" fill="#f43f5e" filter="url(#magentaGlow)" />
+    </g>
+
   </g>
 
-  <!-- Expressive Monogram "N" Logo -->
-  <g filter="url(#dropShadow)">
-    <!-- 1. 'U' Base Curve connecting left & right pillars in a smooth musical wave -->
-    <path d="M 172 340 C 172 395 340 395 340 340 L 340 376 C 340 425 172 425 172 376 Z"
-          fill="url(#numoWave)" opacity="0.9" />
-
-    <!-- 2. 'N' Left Pillar (rounded top & bottom flow) -->
-    <path d="M 148 136 C 148 116 164 100 184 100 C 204 100 220 116 220 136 L 220 372 C 220 392 204 408 184 408 C 164 408 148 392 148 372 Z"
-          fill="url(#cyanPillar)" />
-
-    <!-- 3. 'N' Right Pillar with Eighth Note Flag Swoop -->
-    <path d="M 292 136 C 292 116 308 100 328 100 C 348 100 364 116 364 136 L 364 372 C 364 392 348 408 328 408 C 308 408 292 392 292 372 Z"
-          fill="url(#violetPillar)" />
-
-    <!-- Musical Eighth Note Flag swooping elegantly from top-right pillar -->
-    <path d="M 348 102 C 388 90 420 120 412 165 C 392 135 368 132 348 138 Z"
-          fill="url(#violetPillar)" filter="url(#softGlow)" />
-
-    <!-- 4. Woven Diagonal Ribbon forming 'N' bridge -->
-    <path d="M 180 112 C 196 100 218 110 222 130 L 328 372 C 334 386 324 402 308 404 C 294 406 278 394 274 378 L 168 136 C 162 122 168 114 180 112 Z"
-          fill="url(#numoWave)" filter="url(#softGlow)" />
-
-    <!-- Specular Highlight Curve -->
-    <path d="M 190 126 L 312 380" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-opacity="0.8" />
-
-    <!-- 5. 'O' Central Vinyl Record Disc & Pulsing Radio Core -->
-    <circle cx="256" cy="256" r="48" fill="#090D16" stroke="url(#vinylRing)" stroke-width="5" filter="url(#softGlow)" />
-    <circle cx="256" cy="256" r="38" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.25" stroke-dasharray="8 6 12 6" />
-    <circle cx="256" cy="256" r="28" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.4" />
-    <circle cx="256" cy="256" r="18" fill="url(#vinylRing)" />
-    <circle cx="256" cy="256" r="8" fill="#0A0F1D" />
-    <circle cx="256" cy="256" r="4" fill="#FFFFFF" />
+  <!-- 4. Subtle Bottom Sound Baseline Grid -->
+  <g opacity="0.35">
+    <line x1="104" y1="422" x2="408" y2="422" stroke="#334155" stroke-width="2" stroke-linecap="round" />
+    <circle cx="138" cy="422" r="3" fill="#0284c7" />
+    <circle cx="256" cy="422" r="3" fill="#6366f1" />
+    <circle cx="374" cy="422" r="3" fill="#ec4899" />
   </g>
 </svg>

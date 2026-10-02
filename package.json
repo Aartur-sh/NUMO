@@ -1,7 +1,7 @@
 {
   "name": "numo-radio",
   "private": true,
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "NUMO Radio - Modern Electronic & Ambient Live Stream",
   "license": "MIT",
   "type": "module",

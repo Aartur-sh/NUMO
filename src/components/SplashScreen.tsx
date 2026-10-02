@@ -67,90 +67,78 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="relative flex flex-col items-center gap-3 z-10"
           >
-            {/* Master Stylized Woven NUMO Musical Logo Icon */}
+            {/* Master Stylized 3-Equalizer N Musical Logo Icon */}
             <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl p-0.5 bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-600 shadow-2xl shadow-cyan-950/80">
-              <div className="w-full h-full rounded-[22px] bg-[#0b0f1a] flex items-center justify-center p-3 relative overflow-hidden">
-                {/* Embedded SVG of Woven NUMO Musical Monogram */}
+              <div className="w-full h-full rounded-[22px] bg-[#000000] flex items-center justify-center p-3 relative overflow-hidden">
+                {/* Embedded SVG of 3-Equalizer Letter N Logo */}
                 <svg
                   viewBox="0 0 512 512"
-                  className="w-full h-full drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+                  className="w-full h-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
                 >
                   <defs>
-                    <linearGradient id="splashCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#38BDF8" />
-                      <stop offset="50%" stopColor="#0284C7" />
-                      <stop offset="100%" stopColor="#0369A1" />
-                    </linearGradient>
-                    <linearGradient id="splashViolet" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#C084FC" />
-                      <stop offset="50%" stopColor="#818CF8" />
-                      <stop offset="100%" stopColor="#4F46E5" />
-                    </linearGradient>
-                    <linearGradient id="splashWave" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#38BDF8" />
-                      <stop offset="35%" stopColor="#0284C7" />
-                      <stop offset="70%" stopColor="#818CF8" />
-                      <stop offset="100%" stopColor="#C084FC" />
-                    </linearGradient>
-                    <linearGradient id="splashVinyl" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#38BDF8" />
-                      <stop offset="50%" stopColor="#818CF8" />
-                      <stop offset="100%" stopColor="#C084FC" />
-                    </linearGradient>
+                    <filter id="splashCyanGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#22d3ee" floodOpacity="0.9" />
+                    </filter>
+                    <filter id="splashIndigoGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#818cf8" floodOpacity="0.9" />
+                    </filter>
+                    <filter id="splashMagentaGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#ec4899" floodOpacity="0.9" />
+                    </filter>
                   </defs>
 
-                  {/* Equalizer Frequency Background Bars */}
-                  <g opacity="0.35">
-                    <rect x="72" y="210" width="6" height="92" rx="3" fill="#38BDF8" />
-                    <rect x="86" y="170" width="6" height="172" rx="3" fill="#38BDF8" />
-                    <rect x="420" y="170" width="6" height="172" rx="3" fill="#C084FC" />
-                    <rect x="434" y="210" width="6" height="92" rx="3" fill="#C084FC" />
+                  <g id="letterN-EqualizerSplash">
+                    {/* Left Pillar */}
+                    <g>
+                      <rect x="114" y="372" width="48" height="30" rx="10" fill="#0284c7" />
+                      <rect x="114" y="334" width="48" height="30" rx="10" fill="#0369a1" />
+                      <rect x="114" y="296" width="48" height="30" rx="10" fill="#0284c7" />
+                      <rect x="114" y="258" width="48" height="30" rx="10" fill="#0ea5e9" />
+                      <rect x="114" y="220" width="48" height="30" rx="10" fill="#0ea5e9" />
+                      <rect x="114" y="182" width="48" height="30" rx="10" fill="#38bdf8" />
+                      <rect x="114" y="144" width="48" height="30" rx="10" fill="#38bdf8" />
+                      <rect x="114" y="106" width="48" height="30" rx="10" fill="#a5f3fc" filter="url(#splashCyanGlow)" />
+                      <circle cx="138" cy="86" r="4.5" fill="#38bdf8" filter="url(#splashCyanGlow)" />
+                    </g>
+
+                    {/* Diagonal Stroke */}
+                    <g>
+                      <g transform="translate(176, 142) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#38bdf8" />
+                      </g>
+                      <g transform="translate(202, 178) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#60a5fa" />
+                      </g>
+                      <g transform="translate(228, 214) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#3b82f6" />
+                      </g>
+                      <g transform="translate(256, 256) rotate(38)">
+                        <rect x="-24" y="-15" width="48" height="30" rx="10" fill="#818cf8" filter="url(#splashIndigoGlow)" />
+                      </g>
+                      <g transform="translate(284, 298) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#6366f1" />
+                      </g>
+                      <g transform="translate(310, 334) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#a855f7" />
+                      </g>
+                      <g transform="translate(336, 370) rotate(38)">
+                        <rect x="-23" y="-14" width="46" height="28" rx="9" fill="#c084fc" />
+                      </g>
+                    </g>
+
+                    {/* Right Pillar */}
+                    <g>
+                      <rect x="350" y="372" width="48" height="30" rx="10" fill="#701a75" />
+                      <rect x="350" y="334" width="48" height="30" rx="10" fill="#86198f" />
+                      <rect x="350" y="296" width="48" height="30" rx="10" fill="#a21caf" />
+                      <rect x="350" y="258" width="48" height="30" rx="10" fill="#c026d3" />
+                      <rect x="350" y="220" width="48" height="30" rx="10" fill="#d946ef" />
+                      <rect x="350" y="182" width="48" height="30" rx="10" fill="#ec4899" />
+                      <rect x="350" y="144" width="48" height="30" rx="10" fill="#f43f5e" />
+                      <rect x="350" y="106" width="48" height="30" rx="10" fill="#ffe4e6" filter="url(#splashMagentaGlow)" />
+                      <circle cx="374" cy="86" r="4.5" fill="#f43f5e" filter="url(#splashMagentaGlow)" />
+                    </g>
                   </g>
-
-                  {/* 1. 'U' Base Curve */}
-                  <path
-                    d="M 172 340 C 172 395 340 395 340 340 L 340 376 C 340 425 172 425 172 376 Z"
-                    fill="url(#splashWave)"
-                    opacity="0.9"
-                  />
-
-                  {/* 2. 'N' Left Pillar */}
-                  <path
-                    d="M 148 136 C 148 116 164 100 184 100 C 204 100 220 116 220 136 L 220 372 C 220 392 204 408 184 408 C 164 408 148 392 148 372 Z"
-                    fill="url(#splashCyan)"
-                  />
-
-                  {/* 3. 'N' Right Pillar & Eighth Note Flag */}
-                  <path
-                    d="M 292 136 C 292 116 308 100 328 100 C 348 100 364 116 364 136 L 364 372 C 364 392 348 408 328 408 C 308 408 292 392 292 372 Z"
-                    fill="url(#splashViolet)"
-                  />
-                  <path
-                    d="M 348 102 C 388 90 420 120 412 165 C 392 135 368 132 348 138 Z"
-                    fill="url(#splashViolet)"
-                  />
-
-                  {/* 4. Woven Diagonal Wave */}
-                  <path
-                    d="M 180 112 C 196 100 218 110 222 130 L 328 372 C 334 386 324 402 308 404 C 294 406 278 394 274 378 L 168 136 C 162 122 168 114 180 112 Z"
-                    fill="url(#splashWave)"
-                  />
-
-                  {/* Specular Highlight Line */}
-                  <path
-                    d="M 190 126 L 312 380"
-                    stroke="#FFFFFF"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                    strokeOpacity="0.8"
-                  />
-
-                  {/* 5. 'O' Central Vinyl Record Disc & Pulsing Core */}
-                  <circle cx="256" cy="256" r="48" fill="#090D16" stroke="url(#splashVinyl)" strokeWidth="5" />
-                  <circle cx="256" cy="256" r="38" fill="none" stroke="#FFFFFF" strokeWidth="1.5" strokeOpacity="0.25" strokeDasharray="8 6 12 6" />
-                  <circle cx="256" cy="256" r="18" fill="url(#splashVinyl)" />
-                  <circle cx="256" cy="256" r="8" fill="#0A0F1D" />
-                  <circle cx="256" cy="256" r="4" fill="#FFFFFF" />
                 </svg>
 
                 {/* Shimmer sweep effect */}
