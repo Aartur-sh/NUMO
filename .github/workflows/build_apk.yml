@@ -121,6 +121,11 @@ jobs:
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
                   </activity>
+                  <service
+                      android:name=".MediaPlaybackService"
+                      android:enabled="true"
+                      android:exported="false"
+                      android:foregroundServiceType="mediaPlayback" />
                   <provider
                       android:name="androidx.core.content.FileProvider"
                       android:authorities="${applicationId}.fileprovider"
@@ -134,11 +139,108 @@ jobs:
           </manifest>
           EOF
 
+      - name: Configure MediaPlaybackService
+        run: |
+          cat << 'EOF' > android/app/src/main/java/com/numoradio/app/MediaPlaybackService.java
+          package com.numoradio.app;
+
+          import android.app.Notification;
+          import android.app.NotificationChannel;
+          import android.app.NotificationManager;
+          import android.app.PendingIntent;
+          import android.app.Service;
+          import android.content.Context;
+          import android.content.Intent;
+          import android.os.Build;
+          import android.os.IBinder;
+          import android.os.PowerManager;
+          import androidx.core.app.NotificationCompat;
+
+          public class MediaPlaybackService extends Service {
+              private static final String CHANNEL_ID = "numo_media_playback";
+              private static final int NOTIFICATION_ID = 1001;
+              private PowerManager.WakeLock wakeLock;
+
+              @Override
+              public void onCreate() {
+                  super.onCreate();
+                  createNotificationChannel();
+
+                  try {
+                      PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                      if (powerManager != null) {
+                          wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "NUMORadio::MediaWakeLock");
+                          wakeLock.acquire();
+                      }
+                  } catch (Exception ignored) {}
+              }
+
+              @Override
+              public int onStartCommand(Intent intent, int flags, int startId) {
+                  try {
+                      Intent notificationIntent = new Intent(this, MainActivity.class);
+                      PendingIntent pendingIntent = PendingIntent.getActivity(
+                          this, 0, notificationIntent,
+                          PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+                      );
+
+                      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                          .setContentTitle("NUMO Radio")
+                          .setContentText("Electronic & Ambient Live Stream")
+                          .setSmallIcon(R.mipmap.ic_launcher)
+                          .setContentIntent(pendingIntent)
+                          .setOngoing(true)
+                          .setPriority(NotificationCompat.PRIORITY_LOW)
+                          .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                          .build();
+
+                      startForeground(NOTIFICATION_ID, notification);
+                  } catch (Exception ignored) {}
+
+                  return START_STICKY;
+              }
+
+              @Override
+              public void onDestroy() {
+                  try {
+                      if (wakeLock != null && wakeLock.isHeld()) {
+                          wakeLock.release();
+                      }
+                  } catch (Exception ignored) {}
+                  super.onDestroy();
+              }
+
+              @Override
+              public IBinder onBind(Intent intent) {
+                  return null;
+              }
+
+              private void createNotificationChannel() {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                      try {
+                          NotificationChannel channel = new NotificationChannel(
+                              CHANNEL_ID,
+                              "NUMO Radio Playback",
+                              NotificationManager.IMPORTANCE_LOW
+                          );
+                          channel.setDescription("Background audio playback service");
+                          NotificationManager manager = getSystemService(NotificationManager.class);
+                          if (manager != null) {
+                              manager.createNotificationChannel(channel);
+                          }
+                      } catch (Exception ignored) {}
+                  }
+              }
+          }
+          EOF
+
       - name: Configure MainActivity
         run: |
           cat << 'EOF' > android/app/src/main/java/com/numoradio/app/MainActivity.java
           package com.numoradio.app;
 
+          import android.content.Intent;
+          import android.os.Build;
           import android.os.Bundle;
           import android.view.View;
           import android.view.Window;
@@ -155,6 +257,7 @@ jobs:
                   registerPlugin(AppUpdatePlugin.class);
                   super.onCreate(savedInstanceState);
                   hideSystemUI();
+                  startMediaService();
               }
 
               @Override
@@ -169,6 +272,18 @@ jobs:
               public void onResume() {
                   super.onResume();
                   hideSystemUI();
+                  startMediaService();
+              }
+
+              private void startMediaService() {
+                  try {
+                      Intent serviceIntent = new Intent(this, MediaPlaybackService.class);
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          startForegroundService(serviceIntent);
+                      } else {
+                          startService(serviceIntent);
+                      }
+                  } catch (Exception ignored) {}
               }
 
               private void hideSystemUI() {
@@ -200,6 +315,7 @@ jobs:
               public void onStart() {
                   super.onStart();
                   hideSystemUI();
+                  startMediaService();
                   if (bridge != null && bridge.getWebView() != null) {
                       WebSettings settings = bridge.getWebView().getSettings();
                       settings.setMediaPlaybackRequiresUserGesture(false);

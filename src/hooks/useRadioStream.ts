@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import Hls from 'hls.js';
 import type { Song } from '../types';
 
 export type ServerId = 'server1' | 'server2';
@@ -62,6 +63,7 @@ const getInitialServer = (): ServerId => {
 
 export function useRadioStream(currentSong?: Song) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const isPlayingRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,6 +76,17 @@ export function useRadioStream(currentSong?: Song) {
   const getActiveServerUrl = useCallback((serverId: ServerId) => {
     const opt = STREAM_SERVERS.find((s) => s.id === serverId);
     return opt ? opt.url : STREAM_SERVERS[0].url;
+  }, []);
+
+  const destroyHls = useCallback(() => {
+    if (hlsRef.current) {
+      try {
+        hlsRef.current.stopLoad();
+        hlsRef.current.detachMedia();
+        hlsRef.current.destroy();
+      } catch {}
+      hlsRef.current = null;
+    }
   }, []);
 
   // Initialize DOM audio player
@@ -127,13 +140,8 @@ export function useRadioStream(currentSong?: Song) {
       const audioEl = audioRef.current;
       if (!audioEl || !isPlayingRef.current) return;
 
-      if (!audioEl.src || audioEl.src === '' || audioEl.src === window.location.href) {
-        return;
-      }
-
       console.warn('Audio stream error event:', audioEl.error?.code, audioEl.error?.message);
 
-      // Do NOT switch servers automatically! Stay on selected server and report error
       isPlayingRef.current = false;
       setIsLoading(false);
       setIsBuffering(false);
@@ -147,12 +155,13 @@ export function useRadioStream(currentSong?: Song) {
     audio.addEventListener('error', handleError);
 
     return () => {
+      destroyHls();
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('error', handleError);
     };
-  }, [selectedServer, getActiveServerUrl]);
+  }, [destroyHls]);
 
   // Update MediaSession on track or play state change for Android Lockscreen & Notification Banner
   useEffect(() => {
@@ -195,11 +204,69 @@ export function useRadioStream(currentSong?: Song) {
     isPlayingRef.current = true;
 
     const targetUrl = getActiveServerUrl(selectedServer);
+    const isHlsStream = targetUrl.endsWith('.m3u8') || targetUrl.includes('/hls/');
+
+    audio.volume = isMuted ? 0 : volume;
+
+    // Check if browser requires hls.js (Chrome, Android WebView, Firefox) vs Native HLS (Safari/iOS)
+    if (isHlsStream && !audio.canPlayType('application/vnd.apple.mpegurl')) {
+      if (Hls.isSupported()) {
+        destroyHls();
+
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 30,
+        });
+
+        hlsRef.current = hls;
+        hls.loadSource(targetUrl);
+        hls.attachMedia(audio);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          audio?.play().then(() => {
+            setIsPlaying(true);
+            setIsLoading(false);
+            setIsBuffering(false);
+            setError(null);
+          }).catch((err) => {
+            console.warn('HLS play rejected:', err);
+            isPlayingRef.current = false;
+            setIsLoading(false);
+            setIsPlaying(false);
+            setError('Помилка відтворення HLS потоку. Натисніть Play для повтору.');
+          });
+        });
+
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) {
+            console.warn('HLS fatal error:', data.type);
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                hls.recoverMediaError();
+                break;
+              default:
+                destroyHls();
+                isPlayingRef.current = false;
+                setIsPlaying(false);
+                setIsLoading(false);
+                setError('Помилка підключення до HLS сервера.');
+                break;
+            }
+          }
+        });
+        return;
+      }
+    }
+
+    // Native HLS (Safari/iOS) or Direct MP3 Icecast
+    destroyHls();
     if (!audio.src || audio.src !== targetUrl) {
       audio.src = targetUrl;
     }
-
-    audio.volume = isMuted ? 0 : volume;
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
@@ -226,13 +293,16 @@ export function useRadioStream(currentSong?: Song) {
           setError('Помилка відтворення. Натисніть Play для повтору.');
         });
     }
-  }, [volume, isMuted, selectedServer, getActiveServerUrl]);
+  }, [volume, isMuted, selectedServer, getActiveServerUrl, destroyHls]);
 
   const pause = useCallback(() => {
-    if (!audioRef.current) return;
     isPlayingRef.current = false;
-    const audio = audioRef.current;
-    audio.pause();
+    destroyHls();
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      audio.pause();
+      audio.removeAttribute('src');
+    }
     setIsPlaying(false);
     setIsLoading(false);
     setIsBuffering(false);
@@ -241,7 +311,7 @@ export function useRadioStream(currentSong?: Song) {
         navigator.mediaSession.playbackState = 'paused';
       } catch {}
     }
-  }, []);
+  }, [destroyHls]);
 
   const selectServer = useCallback((serverId: ServerId) => {
     setSelectedServer(serverId);
@@ -249,33 +319,15 @@ export function useRadioStream(currentSong?: Song) {
       localStorage.setItem('numo_selected_server', serverId);
     } catch {}
 
-    const targetUrl = getActiveServerUrl(serverId);
-    const audio = audioRef.current;
-    if (!audio) return;
-
     const wasPlaying = isPlayingRef.current;
-    audio.pause();
-    audio.src = targetUrl;
+    pause();
 
     if (wasPlaying) {
-      setIsLoading(true);
-      isPlayingRef.current = true;
-      audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          setIsLoading(false);
-          setIsBuffering(false);
-          setError(null);
-        })
-        .catch((err) => {
-          console.warn('Failed to play newly selected server:', err);
-          isPlayingRef.current = false;
-          setIsPlaying(false);
-          setIsLoading(false);
-          setError('Не вдалося підключитися до обраного сервера');
-        });
+      setTimeout(() => {
+        play();
+      }, 150);
     }
-  }, [getActiveServerUrl]);
+  }, [getActiveServerUrl, pause, play]);
 
   const togglePlay = useCallback(() => {
     setError(null);
