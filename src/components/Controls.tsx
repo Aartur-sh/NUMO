@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, Volume2, Volume1, VolumeX, Loader2, ListMusic } from 'lucide-react';
+import { Play, Pause, Volume2, Volume1, VolumeX, Loader2, ListMusic, Sparkles } from 'lucide-react';
 import type { Language } from '../i18n';
 import { translations } from '../i18n';
 
@@ -14,7 +14,7 @@ interface ControlsProps {
   onPause: () => void;
   onSetVolume: (val: number) => void;
   onToggleMute: () => void;
-  onOpenHistory: () => void;
+  onOpenHistory?: () => void;
   bitrate?: number;
   lang?: Language;
 }
@@ -49,6 +49,28 @@ export const Controls: React.FC<ControlsProps> = ({
   const t = translations[lang];
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [_isDraggingTrack, setIsDraggingTrack] = useState(false);
+  const [showDevToast, setShowDevToast] = useState(false);
+  const devToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleHistoryClick = () => {
+    if (devToastTimerRef.current) {
+      clearTimeout(devToastTimerRef.current);
+    }
+    setShowDevToast(true);
+    devToastTimerRef.current = setTimeout(() => {
+      setShowDevToast(false);
+    }, 2200);
+
+    onOpenHistory?.();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (devToastTimerRef.current) {
+        clearTimeout(devToastTimerRef.current);
+      }
+    };
+  }, []);
 
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -175,17 +197,39 @@ export const Controls: React.FC<ControlsProps> = ({
       {/* Main Controls Row with Absolute Center Alignment */}
       <div className="relative w-full flex items-center justify-between">
         
-        {/* Left Side: Track History Button */}
-        <div className="flex items-center justify-start flex-shrink-0 z-20">
+        {/* Left Side: Track History Button with Anchored 'В розробці' Toast */}
+        <div className="relative flex items-center justify-start flex-shrink-0 z-20">
           <button
             type="button"
-            onClick={onOpenHistory}
+            onClick={handleHistoryClick}
             aria-label="Історія треків"
             title="Переглянути історію ефіру"
             className="w-[60px] h-[60px] rounded-2xl flex items-center justify-center backdrop-blur-xl border bg-white/10 hover:bg-cyan-500/20 hover:border-cyan-400/40 border-white/10 text-cyan-300 shadow-black/40 shadow-lg transition-all active:scale-90 cursor-pointer select-none group"
           >
             <ListMusic className="w-5 h-5 text-cyan-300 group-hover:text-cyan-200 transition-colors" />
           </button>
+
+          {/* Floating 'В розробці' Banner anchored directly ABOVE this button (smooth Pop!_OS glass, no jump glitch) */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 z-50 pointer-events-none whitespace-nowrap">
+            <AnimatePresence>
+              {showDevToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{
+                    opacity: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+                    y: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                    scale: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#0d121f]/75 backdrop-blur-2xl border border-white/20 text-cyan-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_12px_32px_rgba(0,0,0,0.85)] text-xs font-medium select-none"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse flex-shrink-0" />
+                  <span className="tracking-wide">{lang === 'en' ? 'In development' : 'В розробці'}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Center: Play/Pause Button positioned EXACTLY in the dead horizontal center */}

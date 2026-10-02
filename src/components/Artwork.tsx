@@ -178,31 +178,308 @@ const VinylTurntablePlayer: React.FC<{ isPlaying: boolean }> = ({ isPlaying }) =
           <div className="absolute inset-19 rounded-full border border-white/10" />
 
           {/* 
-            4. AUTHENTIC HANDWRITTEN METALLIC MARKER INSCRIPTION ON THE VINYL
+            4. DARK OBSIDIAN VINYL HUB WITH ANIMATED INFINITY (FIGURE 8) EQUALIZER
+            - Clean grooved black vinyl record (no marker text)
+            - Dark midnight obsidian center hub with subtle micro-grooves
+            - Equalizer in the shape of 8 (infinity sign ∞) that dynamically expands and contracts in both directions
+            - Left lobe in electric cyan/sky blue VU bars, right lobe in vibrant magenta/pink VU bars
+            - Center spindle pin crossover
           */}
-          <div className="absolute top-[17%] left-1/2 transform -translate-x-1/2 -rotate-[13deg] pointer-events-none select-none z-20 text-center">
-            <div
-              className="text-slate-100/95 font-bold tracking-wider leading-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.98)] flex flex-col items-center gap-0.5 select-none"
-              style={{
-                fontFamily: "'Permanent Marker', 'Caveat', cursive",
-                letterSpacing: '0.06em',
-                filter: 'drop-shadow(0 0 2px rgba(34,211,238,0.7)) drop-shadow(0 3px 6px rgba(0,0,0,0.95))',
-              }}
-            >
-              <span className="text-2xl sm:text-3xl text-cyan-200 transform -rotate-1 tracking-wider">NUMO</span>
-              <span className="text-xl sm:text-2xl text-sky-200/95 transform rotate-2 tracking-wide">Radio</span>
-            </div>
-          </div>
+          <svg
+            viewBox="0 0 400 400"
+            className="absolute inset-0 w-full h-full pointer-events-none select-none z-20"
+          >
+            <defs>
+              {/* Dark Obsidian Center Hub Radial Gradient */}
+              <radialGradient id="darkHubGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#0f1629" />
+                <stop offset="55%" stopColor="#080c18" />
+                <stop offset="85%" stopColor="#04060c" />
+                <stop offset="100%" stopColor="#020306" />
+              </radialGradient>
 
-          {/* Center Vinyl Label Hub & Brass Spindle Pin */}
-          <div className="relative w-[30%] aspect-square rounded-full bg-gradient-to-br from-slate-900 via-[#0b101e] to-slate-950 border border-cyan-400/30 shadow-inner flex flex-col items-center justify-center p-1.5 text-center select-none">
-            <div className="absolute inset-1 rounded-full border border-cyan-400/20" />
-            
-            {/* Center Chrome Spindle Pin */}
-            <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-slate-300 via-white to-slate-500 border border-slate-900 shadow-md flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />
-            </div>
-          </div>
+              {/* Glowing Infinity Ribbon Gradient (Cyan -> Indigo -> Magenta -> Pink -> Cyan) */}
+              <linearGradient id="infinityRibbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#22d3ee" />
+                <stop offset="28%" stopColor="#38bdf8" />
+                <stop offset="50%" stopColor="#818cf8" />
+                <stop offset="72%" stopColor="#ec4899" />
+                <stop offset="100%" stopColor="#f43f5e" />
+              </linearGradient>
+
+              {/* Dynamic Infinity Aura Glow Filter */}
+              <filter id="infinityAura" x="-40%" y="-40%" width="180%" height="180%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#38bdf8" floodOpacity="0.8" />
+                <feDropShadow dx="0" dy="0" stdDeviation="7" floodColor="#ec4899" floodOpacity="0.6" />
+                <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000000" floodOpacity="0.9" />
+              </filter>
+
+              {/* Peak LED Glow Filters */}
+              <filter id="cyanGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#22d3ee" floodOpacity="0.95" />
+              </filter>
+              <filter id="pinkGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#f43f5e" floodOpacity="0.95" />
+              </filter>
+            </defs>
+
+            <style>
+              {`
+                /* Breathing expansion and contraction in both directions (left and right) */
+                @keyframes infinityBreathe {
+                  0% {
+                    transform: scaleX(0.82) scaleY(0.86);
+                    filter: drop-shadow(0 0 6px rgba(34,211,238,0.4));
+                  }
+                  50% {
+                    transform: scaleX(1.24) scaleY(1.15);
+                    filter: drop-shadow(0 0 16px rgba(236,72,153,0.75)) drop-shadow(0 0 24px rgba(34,211,238,0.7));
+                  }
+                  100% {
+                    transform: scaleX(0.82) scaleY(0.86);
+                    filter: drop-shadow(0 0 6px rgba(34,211,238,0.4));
+                  }
+                }
+
+                /* Traveling neon energy pulse along the infinity track */
+                @keyframes infinityFlow {
+                  0% { stroke-dashoffset: 0; }
+                  100% { stroke-dashoffset: 240; }
+                }
+
+                /* Individual VU frequency bar dynamics */
+                @keyframes vuLeftBar1 { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1.05); } }
+                @keyframes vuLeftBar2 { 0%, 100% { transform: scaleY(0.75); } 50% { transform: scaleY(0.35); } }
+                @keyframes vuLeftBar3 { 0%, 100% { transform: scaleY(0.45); } 50% { transform: scaleY(1.1); } }
+                @keyframes vuLeftBar4 { 0%, 100% { transform: scaleY(0.85); } 50% { transform: scaleY(0.48); } }
+                @keyframes vuLeftBar5 { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(0.98); } }
+
+                @keyframes vuRightBar1 { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.02); } }
+                @keyframes vuRightBar2 { 0%, 100% { transform: scaleY(0.8); } 50% { transform: scaleY(0.42); } }
+                @keyframes vuRightBar3 { 0%, 100% { transform: scaleY(0.42); } 50% { transform: scaleY(1.12); } }
+                @keyframes vuRightBar4 { 0%, 100% { transform: scaleY(0.78); } 50% { transform: scaleY(0.4); } }
+                @keyframes vuRightBar5 { 0%, 100% { transform: scaleY(0.48); } 50% { transform: scaleY(1.04); } }
+              `}
+            </style>
+
+            {/* A. Dark Obsidian Center Vinyl Hub */}
+            <g>
+              {/* Outer Deep Titanium Bezel */}
+              <circle
+                cx="200"
+                cy="200"
+                r="64"
+                fill="url(#darkHubGrad)"
+                stroke="#1e273a"
+                strokeWidth="2.5"
+              />
+              {/* Silver Chamfer Ring */}
+              <circle
+                cx="200"
+                cy="200"
+                r="61.5"
+                fill="none"
+                stroke="rgba(56,189,248,0.25)"
+                strokeWidth="0.8"
+              />
+              {/* Inner Vinyl Micro-grooves on Hub */}
+              <circle cx="200" cy="200" r="56" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
+              <circle cx="200" cy="200" r="49" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" />
+              <circle cx="200" cy="200" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.75" />
+            </g>
+
+            {/* 
+              B. ANIMATED INFINITY (FIGURE 8) AUDIO EQUALIZER
+              Expands and contracts horizontally and vertically in both directions!
+            */}
+            <g
+              style={{
+                transformOrigin: '200px 200px',
+                animation: isPlaying ? 'infinityBreathe 1.8s ease-in-out infinite' : 'none',
+              }}
+              filter="url(#infinityAura)"
+            >
+              {/* 1. Base Glowing Infinity Track Outline */}
+              <path
+                d="M 200,200 C 214,178 238,178 245,190 C 252,202 245,214 235,218 C 218,222 208,206 200,200 C 192,194 182,178 165,182 C 155,186 148,198 155,210 C 162,222 185,222 200,200 Z"
+                fill="none"
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* 2. Flowing Neon Energy Ribbon */}
+              <path
+                d="M 200,200 C 214,178 238,178 245,190 C 252,202 245,214 235,218 C 218,222 208,206 200,200 C 192,194 182,178 165,182 C 155,186 148,198 155,210 C 162,222 185,222 200,200 Z"
+                fill="none"
+                stroke="url(#infinityRibbonGrad)"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="14 10"
+                style={{
+                  animation: isPlaying ? 'infinityFlow 3s linear infinite' : 'none',
+                }}
+              />
+
+              {/* 3. LEFT LOBE EQUALIZER (Electric Cyan & Sky Blue VU Bars) */}
+              <g id="leftLoopEqualizer">
+                {/* Bar L1 (x=165, 4 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '166px 212px',
+                    animation: isPlaying ? 'vuLeftBar1 0.75s ease-in-out infinite alternate' : 'none',
+                  }}
+                >
+                  <rect x="164.5" y="208.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.8" />
+                  <rect x="164.5" y="205.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.8" />
+                  <rect x="164.5" y="202.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.9" />
+                  <rect x="164.5" y="199.5" width="3.5" height="2" rx="0.5" fill="#67e8f9" filter="url(#cyanGlow)" />
+                </g>
+
+                {/* Bar L2 (x=171, 6 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '172px 214px',
+                    animation: isPlaying ? 'vuLeftBar2 0.65s ease-in-out infinite alternate 0.1s' : 'none',
+                  }}
+                >
+                  <rect x="170.5" y="210.5" width="3.5" height="2" rx="0.5" fill="#0891b2" opacity="0.8" />
+                  <rect x="170.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#06b6d4" opacity="0.8" />
+                  <rect x="170.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.85" />
+                  <rect x="170.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.9" />
+                  <rect x="170.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.9" />
+                  <rect x="170.5" y="195.5" width="3.5" height="2" rx="0.5" fill="#a5f3fc" filter="url(#cyanGlow)" />
+                </g>
+
+                {/* Bar L3 (x=177, 8 segments - Peak left lobe) */}
+                <g
+                  style={{
+                    transformOrigin: '178px 216px',
+                    animation: isPlaying ? 'vuLeftBar3 0.95s ease-in-out infinite alternate 0.05s' : 'none',
+                  }}
+                >
+                  <rect x="176.5" y="212.5" width="3.5" height="2" rx="0.5" fill="#0891b2" opacity="0.8" />
+                  <rect x="176.5" y="209.5" width="3.5" height="2" rx="0.5" fill="#06b6d4" opacity="0.8" />
+                  <rect x="176.5" y="206.5" width="3.5" height="2" rx="0.5" fill="#06b6d4" opacity="0.85" />
+                  <rect x="176.5" y="203.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.85" />
+                  <rect x="176.5" y="200.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.9" />
+                  <rect x="176.5" y="197.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.9" />
+                  <rect x="176.5" y="194.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.95" />
+                  <rect x="176.5" y="191.5" width="3.5" height="2" rx="0.5" fill="#e0f2fe" filter="url(#cyanGlow)" />
+                </g>
+
+                {/* Bar L4 (x=183, 6 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '184px 214px',
+                    animation: isPlaying ? 'vuLeftBar4 0.72s ease-in-out infinite alternate 0.18s' : 'none',
+                  }}
+                >
+                  <rect x="182.5" y="210.5" width="3.5" height="2" rx="0.5" fill="#0891b2" opacity="0.8" />
+                  <rect x="182.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#06b6d4" opacity="0.8" />
+                  <rect x="182.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#22d3ee" opacity="0.85" />
+                  <rect x="182.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#38bdf8" opacity="0.9" />
+                  <rect x="182.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#818cf8" opacity="0.9" />
+                  <rect x="182.5" y="195.5" width="3.5" height="2" rx="0.5" fill="#c7d2fe" filter="url(#cyanGlow)" />
+                </g>
+
+                {/* Bar L5 (x=189, 4 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '190px 210px',
+                    animation: isPlaying ? 'vuLeftBar5 0.82s ease-in-out infinite alternate 0.12s' : 'none',
+                  }}
+                >
+                  <rect x="188.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#4f46e5" opacity="0.8" />
+                  <rect x="188.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#6366f1" opacity="0.85" />
+                  <rect x="188.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#818cf8" opacity="0.9" />
+                  <rect x="188.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#a5b4fc" filter="url(#cyanGlow)" />
+                </g>
+              </g>
+
+              {/* 4. RIGHT LOBE EQUALIZER (Electric Magenta, Pink & Violet VU Bars) */}
+              <g id="rightLoopEqualizer">
+                {/* Bar R1 (x=211, 4 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '211px 210px',
+                    animation: isPlaying ? 'vuRightBar1 0.8s ease-in-out infinite alternate 0.08s' : 'none',
+                  }}
+                >
+                  <rect x="209.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#7c3aed" opacity="0.8" />
+                  <rect x="209.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#9333ea" opacity="0.85" />
+                  <rect x="209.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#c084fc" opacity="0.9" />
+                  <rect x="209.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#f0abfc" filter="url(#pinkGlow)" />
+                </g>
+
+                {/* Bar R2 (x=217, 6 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '217px 214px',
+                    animation: isPlaying ? 'vuRightBar2 0.68s ease-in-out infinite alternate 0.15s' : 'none',
+                  }}
+                >
+                  <rect x="215.5" y="210.5" width="3.5" height="2" rx="0.5" fill="#9d174d" opacity="0.8" />
+                  <rect x="215.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#be185d" opacity="0.8" />
+                  <rect x="215.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#db2777" opacity="0.85" />
+                  <rect x="215.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#ec4899" opacity="0.9" />
+                  <rect x="215.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#f472b6" opacity="0.9" />
+                  <rect x="215.5" y="195.5" width="3.5" height="2" rx="0.5" fill="#fbcfe8" filter="url(#pinkGlow)" />
+                </g>
+
+                {/* Bar R3 (x=223, 8 segments - Peak right lobe) */}
+                <g
+                  style={{
+                    transformOrigin: '223px 216px',
+                    animation: isPlaying ? 'vuRightBar3 1.02s ease-in-out infinite alternate 0.02s' : 'none',
+                  }}
+                >
+                  <rect x="221.5" y="212.5" width="3.5" height="2" rx="0.5" fill="#9f1239" opacity="0.8" />
+                  <rect x="221.5" y="209.5" width="3.5" height="2" rx="0.5" fill="#be123c" opacity="0.8" />
+                  <rect x="221.5" y="206.5" width="3.5" height="2" rx="0.5" fill="#e11d48" opacity="0.85" />
+                  <rect x="221.5" y="203.5" width="3.5" height="2" rx="0.5" fill="#f43f5e" opacity="0.85" />
+                  <rect x="221.5" y="200.5" width="3.5" height="2" rx="0.5" fill="#fb7185" opacity="0.9" />
+                  <rect x="221.5" y="197.5" width="3.5" height="2" rx="0.5" fill="#ec4899" opacity="0.9" />
+                  <rect x="221.5" y="194.5" width="3.5" height="2" rx="0.5" fill="#f472b6" opacity="0.95" />
+                  <rect x="221.5" y="191.5" width="3.5" height="2" rx="0.5" fill="#ffe4e6" filter="url(#pinkGlow)" />
+                </g>
+
+                {/* Bar R4 (x=229, 6 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '229px 214px',
+                    animation: isPlaying ? 'vuRightBar4 0.7s ease-in-out infinite alternate 0.2s' : 'none',
+                  }}
+                >
+                  <rect x="227.5" y="210.5" width="3.5" height="2" rx="0.5" fill="#be185d" opacity="0.8" />
+                  <rect x="227.5" y="207.5" width="3.5" height="2" rx="0.5" fill="#db2777" opacity="0.8" />
+                  <rect x="227.5" y="204.5" width="3.5" height="2" rx="0.5" fill="#ec4899" opacity="0.85" />
+                  <rect x="227.5" y="201.5" width="3.5" height="2" rx="0.5" fill="#f472b6" opacity="0.9" />
+                  <rect x="227.5" y="198.5" width="3.5" height="2" rx="0.5" fill="#fb7185" opacity="0.9" />
+                  <rect x="227.5" y="195.5" width="3.5" height="2" rx="0.5" fill="#fce7f3" filter="url(#pinkGlow)" />
+                </g>
+
+                {/* Bar R5 (x=235, 4 segments) */}
+                <g
+                  style={{
+                    transformOrigin: '235px 212px',
+                    animation: isPlaying ? 'vuRightBar5 0.85s ease-in-out infinite alternate 0.1s' : 'none',
+                  }}
+                >
+                  <rect x="233.5" y="208.5" width="3.5" height="2" rx="0.5" fill="#e11d48" opacity="0.8" />
+                  <rect x="233.5" y="205.5" width="3.5" height="2" rx="0.5" fill="#f43f5e" opacity="0.8" />
+                  <rect x="233.5" y="202.5" width="3.5" height="2" rx="0.5" fill="#fb7185" opacity="0.9" />
+                  <rect x="233.5" y="199.5" width="3.5" height="2" rx="0.5" fill="#fda4af" filter="url(#pinkGlow)" />
+                </g>
+              </g>
+
+              {/* 5. Center Crossover Spindle Node */}
+              <circle cx="200" cy="200" r="5" fill="#030712" stroke="#818cf8" strokeWidth="1.2" />
+              <circle cx="200" cy="200" r="2.2" fill="#c7d2fe" />
+            </g>
+          </svg>
         </div>
       </div>
 
@@ -258,6 +535,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
 
   // View mode: 'cover' (artwork) or 'turntable' (spinning vinyl player)
   const [viewMode, setViewMode] = useState<'cover' | 'turntable'>('turntable');
+  const [direction, setDirection] = useState<number>(0);
 
   // Equalizer style: 'spectrum' (28-band studio rods) | 'laser' (neon laser wave) | 'off' (disabled)
   const [equalizerMode, setEqualizerMode] = useState<'spectrum' | 'laser' | 'off'>(() => {
@@ -274,6 +552,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
       setIsCoverReady(false);
       setImageError(false);
       if (!userSwitchedRef.current) {
+        setDirection(1);
         setViewMode('turntable');
       }
       return;
@@ -289,6 +568,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
       if (isMounted) {
         setIsCoverReady(true);
         if (!userSwitchedRef.current) {
+          setDirection(-1);
           setViewMode('cover');
         }
       }
@@ -298,6 +578,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
         setImageError(true);
         setIsCoverReady(false);
         if (!userSwitchedRef.current) {
+          setDirection(1);
           setViewMode('turntable');
         }
       }
@@ -308,7 +589,7 @@ export const Artwork: React.FC<ArtworkProps> = ({
     };
   }, [resolvedArtUrl]);
 
-  // Swipe gesture detection
+  // Directional Horizontal Swipe Detection
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
 
@@ -322,15 +603,29 @@ export const Artwork: React.FC<ArtworkProps> = ({
     const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
     const deltaY = e.changedTouches[0].clientY - touchStartYRef.current;
 
-    // Detect horizontal swipe (at least 40px, predominantly horizontal)
-    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
-      toggleViewMode();
+    // Detect horizontal swipe (at least 35px, predominantly horizontal)
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX < 0) {
+        // Swiped left -> transition to next view
+        toggleViewMode(1);
+      } else {
+        // Swiped right -> transition to previous view
+        toggleViewMode(-1);
+      }
     }
     touchStartXRef.current = null;
     touchStartYRef.current = null;
   };
 
-  const toggleViewMode = () => {
+  const switchView = (targetMode: 'cover' | 'turntable') => {
+    if (targetMode === viewMode) return;
+    setDirection(targetMode === 'turntable' ? 1 : -1);
+    userSwitchedRef.current = true;
+    setViewMode(targetMode);
+  };
+
+  const toggleViewMode = (swipeDir: number = 1) => {
+    setDirection(swipeDir);
     userSwitchedRef.current = true;
     setViewMode((prev) => (prev === 'cover' ? 'turntable' : 'cover'));
   };
@@ -345,6 +640,35 @@ export const Artwork: React.FC<ArtworkProps> = ({
       localStorage.setItem('numo_eq_style', next);
       return next;
     });
+  };
+
+  // Horizontal directional slide carousel variants
+  const slideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? '100%' : dir < 0 ? '-100%' : 0,
+      opacity: 0,
+      scale: 0.95,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        x: { type: 'spring' as const, stiffness: 320, damping: 30 },
+        opacity: { duration: 0.28 },
+        scale: { duration: 0.28 },
+      },
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? '-100%' : '100%',
+      opacity: 0,
+      scale: 0.95,
+      transition: {
+        x: { type: 'spring' as const, stiffness: 320, damping: 30 },
+        opacity: { duration: 0.22 },
+        scale: { duration: 0.22 },
+      },
+    }),
   };
 
   return (
@@ -369,39 +693,41 @@ export const Artwork: React.FC<ArtworkProps> = ({
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="relative z-10 w-full aspect-square rounded-[32px] sm:rounded-[40px] p-[0.75px] bg-gradient-to-r from-purple-800 via-indigo-700 to-fuchsia-900 bg-[length:200%_200%] animate-gradient-border shadow-2xl shadow-black/80 overflow-hidden flex items-center justify-center group my-auto cursor-grab active:cursor-grabbing"
+        className="relative z-10 w-full aspect-square rounded-[32px] sm:rounded-[40px] p-[0.75px] bg-gradient-to-r from-purple-800 via-indigo-700 to-fuchsia-900 bg-[length:200%_200%] animate-gradient-border shadow-2xl shadow-black/80 overflow-hidden flex items-center justify-center group my-auto cursor-grab active:cursor-grabbing touch-pan-y"
       >
         <div className="w-full h-full rounded-[35.5px] sm:rounded-[43.5px] p-1.5 sm:p-2 bg-gradient-to-b from-white/20 via-white/10 to-white/5 backdrop-blur-2xl border border-white/20 overflow-hidden flex items-center justify-center">
           <div className="relative w-full h-full rounded-[28px] sm:rounded-[34px] overflow-hidden bg-slate-900 flex items-center justify-center">
             
             {/* View Switching Transition between Cover Art and Vinyl Player */}
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="popLayout" custom={direction} initial={false}>
               {viewMode === 'cover' && isCoverReady && resolvedArtUrl && !imageError ? (
                 <motion.div
                   key="cover-view"
-                  initial={{ opacity: 0, y: -24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 24 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
                   className="w-full h-full relative flex items-center justify-center overflow-hidden bg-slate-900 z-10"
                 >
                   <img
                     src={resolvedArtUrl}
                     alt={songTitle || 'NUMO Radio'}
                     onError={() => setImageError(true)}
-                    className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+                    className={`w-full h-full object-cover transition-transform duration-700 ease-out select-none pointer-events-none ${
                       isPlaying ? 'scale-105' : 'scale-100'
                     }`}
                   />
                 </motion.div>
               ) : (
-                /* Interactive High-End Vinyl Turntable Player (Default on launch & while cover is loading) */
+                /* Interactive High-End Vinyl Turntable Player */
                 <motion.div
                   key="turntable-view"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -24 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
                   className="w-full h-full relative z-0"
                 >
                   <VinylTurntablePlayer isPlaying={isPlaying} />
@@ -423,8 +749,8 @@ export const Artwork: React.FC<ArtworkProps> = ({
               ELEGANT STUDIO EQUALIZER:
               - Sits flush at bottom edge
               - Tapping cycles between:
-                1. 28-band Studio Spectrum
-                2. Neon Laser Oscilloscope (edge-to-edge)
+                1. 28-band Studio Spectrum (rises smoothly from bottom upwards)
+                2. Neon Laser Oscilloscope (flows in from side, manifesting from glow)
                 3. OFF (Disabled)
             */}
             <button
@@ -438,30 +764,36 @@ export const Artwork: React.FC<ArtworkProps> = ({
                   : 'Еквалайзер вимкнено (натисніть для увімкнення)'
               }
               aria-label="Перемкнути еквалайзер"
-              className={`absolute bottom-0 left-0 right-0 z-20 cursor-pointer pointer-events-auto select-none focus:outline-none transition-all ${
+              className={`absolute bottom-0 left-0 right-0 z-20 cursor-pointer pointer-events-auto select-none focus:outline-none ${
                 equalizerMode === 'off'
-                  ? 'h-6 bg-transparent hover:bg-black/20 flex items-center justify-center'
-                  : 'h-10 sm:h-12 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end justify-center pb-0.5 px-0'
+                  ? 'h-8 bg-transparent'
+                  : 'h-10 sm:h-12 bg-gradient-to-t from-black/50 via-black/15 to-transparent flex items-end justify-center pb-0 px-0'
               }`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {equalizerMode === 'spectrum' ? (
-                  /* 1. Refined 28-Band Studio Spectrum Rods */
+                  /* 1. Refined 28-Band Studio Spectrum Rods: sits 100% flush at the bottom frame */
                   <motion.div
                     key="spectrum"
-                    initial={false}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 3 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full flex items-end justify-between gap-[2px] h-8 sm:h-9 px-1.5 sm:px-2"
+                    initial={{ opacity: 0, y: 24, scaleY: 0.2 }}
+                    animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                    exit={{ opacity: 0, y: 24, scaleY: 0.2 }}
+                    transition={{
+                      type: 'spring' as const,
+                      stiffness: 280,
+                      damping: 24,
+                      duration: 0.35,
+                    }}
+                    style={{ transformOrigin: 'bottom center' }}
+                    className="w-full flex items-end justify-between gap-[2px] h-full px-1.5 sm:px-2 pb-0 m-0"
                   >
                     {STUDIO_SPECTRUM_BARS.map((bar, index) => (
                       <div
                         key={index}
-                        className="flex-1 flex flex-col justify-end items-center h-full"
+                        className="flex-1 flex flex-col justify-end items-center h-full pb-0 m-0"
                       >
                         <div
-                          className={`w-full rounded-t-sm transition-[opacity,box-shadow] bg-gradient-to-t ${bar.bg}`}
+                          className={`w-full rounded-t-sm rounded-b-none transition-[opacity,box-shadow] bg-gradient-to-t ${bar.bg}`}
                           style={{
                             height: '14%',
                             opacity: isPlaying ? 0.95 : 0.35,
@@ -477,29 +809,24 @@ export const Artwork: React.FC<ArtworkProps> = ({
                     ))}
                   </motion.div>
                 ) : equalizerMode === 'laser' ? (
-                  /* 2. Edge-to-Edge Dual Neon Laser Oscilloscope */
+                  /* 2. Edge-to-Edge Dual Neon Laser Oscilloscope: flows in from side and manifests from glow */
                   <motion.div
                     key="laser"
-                    initial={false}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 3 }}
-                    transition={{ duration: 0.2 }}
+                    initial={{ opacity: 0, scaleX: 0.25, filter: 'blur(8px)', x: -50 }}
+                    animate={{ opacity: 1, scaleX: 1, filter: 'blur(0px)', x: 0 }}
+                    exit={{ opacity: 0, scaleX: 0.25, filter: 'blur(8px)', x: 50 }}
+                    transition={{
+                      type: 'spring' as const,
+                      stiffness: 240,
+                      damping: 26,
+                      duration: 0.4,
+                    }}
+                    style={{ transformOrigin: 'center center' }}
                     className="w-full flex items-center justify-center px-0 overflow-hidden"
                   >
                     <LaserOscilloscope isPlaying={isPlaying} />
                   </motion.div>
-                ) : (
-                  /* 3. OFF state - subtle dot cue on hover */
-                  <motion.div
-                    key="off"
-                    initial={false}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="w-full h-full flex items-center justify-center opacity-0 hover:opacity-60 transition-opacity"
-                  >
-                    <div className="w-8 h-1 rounded-full bg-white/40" />
-                  </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </button>
           </div>

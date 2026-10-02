@@ -1,153 +1,58 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Music, Clock, Disc } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import type { NowPlayingResponse } from '../types';
 import type { Language } from '../i18n';
 
 interface HistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: NowPlayingResponse | null;
+  data?: NowPlayingResponse | null;
   lang: Language;
 }
-
-const TrackArtThumbnail: React.FC<{ artUrl?: string; title: string }> = ({ artUrl, title }) => {
-  const [hasError, setHasError] = useState(false);
-
-  if (artUrl && !hasError) {
-    return (
-      <img
-        src={artUrl}
-        alt={title}
-        className="w-full h-full object-cover rounded-xl"
-        onError={() => setHasError(true)}
-      />
-    );
-  }
-
-  return (
-    <div className="w-full h-full bg-gradient-to-tr from-cyan-950 via-indigo-950 to-slate-900 flex items-center justify-center">
-      <Music className="w-5 h-5 text-cyan-400" />
-    </div>
-  );
-};
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({
   isOpen,
   onClose,
-  data,
   lang,
 }) => {
-  const songHistory = data?.song_history || [];
+  // Automatically smoothly fade away after 2.2 seconds
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => {
+      onClose();
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-end px-4 overflow-hidden"
+          className="fixed bottom-28 sm:bottom-32 left-0 right-0 z-50 flex items-center justify-center pointer-events-none px-4"
           style={{
-            paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 88px), 100px)',
+            bottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 104px), 116px)',
           }}
         >
-          {/* Smooth Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-          />
-
-          {/* Modal Card positioned immediately above History button */}
-          <motion.div
-            style={{
-              transformOrigin: '28px calc(100% - 10px)',
-            }}
-            initial={{ opacity: 0, scale: 0.15, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.15, y: 16 }}
+            initial={{ opacity: 0, y: 14, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{
-              duration: 0.36,
-              ease: [0.05, 0.7, 0.1, 1.0],
+              type: 'spring' as const,
+              stiffness: 420,
+              damping: 28,
             }}
-            className="relative w-full max-w-md rounded-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-700/70 p-5 sm:p-6 shadow-2xl shadow-black flex flex-col gap-4 max-h-[65vh] sm:max-h-[70vh] overflow-y-auto text-white z-10 will-change-transform"
+            className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full bg-[#0d121f]/95 backdrop-blur-2xl border border-cyan-400/40 text-cyan-200 shadow-[0_12px_32px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,255,255,0.25)] text-xs font-semibold select-none cursor-default"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div>
-                <p className="text-xs text-cyan-300 font-semibold tracking-wide">
-                  {lang === 'en' ? 'Recently played on NUMO Radio' : 'Нещодавно в ефірі NUMO Radio'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Закрити"
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Song History List */}
-            {songHistory.length > 0 ? (
-              <div className="flex flex-col gap-2.5">
-                {songHistory.map((item, idx) => {
-                  const title = item.song?.title || item.song?.text || 'Невідомий трек';
-                  const artist = item.song?.artist;
-                  const albumArt = item.song?.art;
-                  const playedAt = item.played_at
-                    ? new Date(item.played_at * 1000).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : null;
-
-                  return (
-                    <div
-                      key={item.sh_id || idx}
-                      className="group relative p-3 rounded-2xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 hover:border-cyan-400/40 transition-all flex items-center gap-3 shadow-sm"
-                    >
-                      {/* Album Art Container */}
-                      <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-slate-950 border border-white/15 flex items-center justify-center flex-shrink-0 shadow-md">
-                        <TrackArtThumbnail artUrl={albumArt} title={title} />
-                      </div>
-
-                      {/* Song Details */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-xs sm:text-sm text-slate-100 truncate group-hover:text-cyan-200 transition-colors">
-                          {title}
-                        </p>
-                        {artist && (
-                          <p className="text-[11px] text-slate-400 truncate mt-0.5 font-medium">
-                            {artist}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Played Time Tag */}
-                      {playedAt && (
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-black/40 border border-white/10 text-[10px] font-mono text-cyan-300 flex-shrink-0">
-                          <Clock className="w-3 h-3 text-cyan-400" />
-                          <span>{playedAt}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 gap-3">
-                <Disc className="w-10 h-10 text-cyan-400/50 animate-spin" style={{ animationDuration: '8s' }} />
-                <p className="text-xs font-semibold">
-                  {lang === 'en' ? 'No recent tracks available' : 'Історія треків завантажується...'}
-                </p>
-              </div>
-            )}
+            <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse flex-shrink-0" />
+            <span className="tracking-wide">
+              {lang === 'en' ? 'In development' : 'В розробці'}
+            </span>
           </motion.div>
         </div>
       )}
     </AnimatePresence>
   );
 };
+

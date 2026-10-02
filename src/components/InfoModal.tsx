@@ -71,20 +71,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   const holdIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
 
-  // Dynamic installed version (detected natively from Android or fallback)
-  const [currentVersion, setCurrentVersion] = useState<string>(
-    APP_VERSION.replace(/(b)\d+$/i, '$1')
-  );
-
-  useEffect(() => {
-    NativeUpdate.getAppVersion().then((ver) => {
-      if (ver) {
-        // Strip any trailing numbers after 'b' (e.g. 0.2.5b16 -> 0.2.5b)
-        const sanitized = ver.replace(/^v/i, '').replace(/(b)\d+$/i, '$1');
-        setCurrentVersion(sanitized);
-      }
-    });
-  }, []);
+  // App version strictly from package.json (APP_VERSION)
+  const currentVersion = APP_VERSION;
 
   const isCurrentBeta =
     currentVersion.toLowerCase().includes('b') ||
@@ -262,6 +250,55 @@ export const InfoModal: React.FC<InfoModalProps> = ({
     }
   };
 
+  // Pop!_OS COSMIC Style 2-stage unfolding variants (expands horizontally first, then downwards)
+  const popOsMorphVariants = {
+    hidden: {
+      opacity: 0,
+      scaleX: 0.1,
+      scaleY: 0.04,
+      y: -14,
+      transformOrigin: 'calc(100% - 24px) 16px',
+    },
+    visible: {
+      opacity: 1,
+      scaleX: 1,
+      scaleY: 1,
+      y: 0,
+      transformOrigin: 'calc(100% - 24px) 16px',
+      transition: {
+        scaleX: { duration: 0.22, ease: [0.16, 1, 0.3, 1] as const },
+        scaleY: { delay: 0.15, duration: 0.32, ease: [0.16, 1, 0.3, 1] as const },
+        opacity: { duration: 0.16 },
+        y: { duration: 0.2 },
+      },
+    },
+    exit: {
+      scaleY: 0.05,
+      scaleX: 0.12,
+      opacity: 0,
+      y: -12,
+      transformOrigin: 'calc(100% - 24px) 16px',
+      transition: {
+        scaleY: { duration: 0.18, ease: [0.7, 0, 0.84, 0] as const },
+        scaleX: { delay: 0.12, duration: 0.18, ease: [0.7, 0, 0.84, 0] as const },
+        opacity: { delay: 0.16, duration: 0.14 },
+      },
+    },
+  };
+
+  const popOsContentVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { delay: 0.22, duration: 0.28, ease: 'easeOut' as const },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.12 },
+    },
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -271,50 +308,51 @@ export const InfoModal: React.FC<InfoModalProps> = ({
             paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 12px), 24px)',
           }}
         >
-          {/* Smooth backdrop */}
+          {/* Smooth Pop!_OS Glass Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/75"
+            className="absolute inset-0 bg-black/65 backdrop-blur-sm"
           />
 
-          {/* Smooth page unfold directly originating from top-right Info button (Pixel 10 tuned) */}
+          {/* Pop!_OS Frosted Glass Window: Expands horizontally, then unfolds downward */}
           <motion.div
-            style={{
-              transformOrigin: 'calc(100% - 24px) 16px',
-            }}
-            initial={{ opacity: 0, scale: 0.15, y: -16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.15, y: -16 }}
-            transition={{
-              duration: 0.36,
-              ease: [0.05, 0.7, 0.1, 1.0],
-            }}
-            className="relative w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700/60 p-5 sm:p-6 shadow-2xl shadow-black flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-white z-10 will-change-transform"
+            variants={popOsMorphVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative w-full max-w-md rounded-3xl bg-[#0d121f]/85 backdrop-blur-3xl border border-white/20 p-5 sm:p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.22),0_24px_65px_rgba(0,0,0,0.92)] flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-white z-10 will-change-transform"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 text-white font-bold">
-                  <Radio className="w-5 h-5" />
+            <motion.div
+              variants={popOsContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="flex flex-col gap-4 w-full"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 text-white font-bold">
+                    <Radio className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white tracking-wide">NUMO Radio</h2>
+                    <p className="text-[11px] text-slate-400">Electronic & Ambient Stream</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-white tracking-wide">NUMO Radio</h2>
-                  <p className="text-[11px] text-slate-400">Electronic & Ambient Stream</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Закрити"
+                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Закрити"
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
             {/* Donate / Support Section */}
             <div className="flex flex-col gap-2 pt-0.5">
@@ -685,6 +723,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
             >
               {t.close}
             </button>
+            </motion.div>
           </motion.div>
         </div>
       )}

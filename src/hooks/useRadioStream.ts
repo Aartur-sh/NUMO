@@ -166,6 +166,15 @@ export function useRadioStream(currentSong?: Song) {
     } else {
       audio.preload = 'auto';
     }
+
+    // Pre-warm Icecast stream socket for instant connection on play
+    if (!audio.src && selectedServerRef.current === 'server1') {
+      audio.src = STREAM_SERVERS[0].url;
+      try {
+        audio.load();
+      } catch {}
+    }
+
     audio.volume = isMuted ? 0 : volume;
     audioRef.current = audio;
 
@@ -451,9 +460,7 @@ export function useRadioStream(currentSong?: Song) {
     pause();
 
     if (wasPlaying) {
-      setTimeout(() => {
-        play(serverId);
-      }, 100);
+      play(serverId);
     }
   }, [pause, play]);
 

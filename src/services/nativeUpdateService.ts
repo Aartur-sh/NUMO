@@ -5,7 +5,6 @@ export interface NativeAppUpdatePlugin {
   openInstallSettings(): Promise<void>;
   downloadAndInstall(options: { url: string; version: string }): Promise<{ success: boolean }>;
   openExternalUrl(options: { url: string }): Promise<void>;
-  getAppVersion(): Promise<{ version: string }>;
   addListener(
     eventName: 'downloadProgress',
     listenerFunc: (data: { progress: number; total: number; downloaded: number }) => void
@@ -18,16 +17,6 @@ const AppUpdateNative = registerPlugin<NativeAppUpdatePlugin>('AppUpdate');
 export const NativeUpdate = {
   isNative(): boolean {
     return Capacitor.isNativePlatform();
-  },
-
-  async getAppVersion(): Promise<string | null> {
-    if (!Capacitor.isNativePlatform()) return null;
-    try {
-      const res = await AppUpdateNative.getAppVersion();
-      return res?.version || null;
-    } catch {
-      return null;
-    }
   },
 
   async canInstall(): Promise<boolean> {

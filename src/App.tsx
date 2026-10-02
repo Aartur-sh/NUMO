@@ -10,7 +10,6 @@ import { TrackInfo } from './components/TrackInfo';
 import { NextTrackCard } from './components/NextTrackCard';
 import { Controls } from './components/Controls';
 import { InfoModal } from './components/InfoModal';
-import { HistoryModal } from './components/HistoryModal';
 import { UpdateModal } from './components/UpdateModal';
 import { SplashScreen } from './components/SplashScreen';
 import { checkForAppUpdate, type AppReleaseInfo } from './services/updateService';
@@ -75,7 +74,7 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       play();
-    }, 400);
+    }, 50);
     return () => clearTimeout(timer);
   }, [play]);
 
@@ -108,7 +107,6 @@ export default function App() {
   };
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const listenersCount = data?.listeners?.current ?? 0;
   const songTitle = currentSong?.title || currentSong?.text || 'NUMO Radio';
@@ -204,7 +202,6 @@ export default function App() {
           onPause={pause}
           onSetVolume={setVolume}
           onToggleMute={toggleMute}
-          onOpenHistory={() => setIsHistoryOpen(true)}
           bitrate={bitrate}
           lang={lang}
         />
@@ -215,14 +212,6 @@ export default function App() {
 
       {/* Animated App Intro Splash Screen */}
       <SplashScreen />
-
-      {/* History Dialog: Recently Played Tracks with timestamps & artwork */}
-      <HistoryModal
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        data={data}
-        lang={lang}
-      />
 
       {/* Info Dialog: App Version, Support Project (Monobank & PayPal) */}
       <InfoModal
