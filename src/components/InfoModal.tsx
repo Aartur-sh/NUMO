@@ -403,8 +403,6 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 })}
               </div>
             </div>
-              </div>
-            </div>
 
             {/* Radio Station Philosophy & Story */}
             <div className="flex flex-col gap-2.5 rounded-2xl bg-white/[0.05] border border-white/10 p-4 shadow-inner">
