@@ -49,26 +49,29 @@ app.get('/api/radio/nowplaying', async (_req, res) => {
     if (nowPlayingCache) {
       return res.json(nowPlayingCache.data);
     }
-    return res.status(502).json({
-      artist: 'NUMO Radio',
-      title: 'Electronic & Ambient Live',
-      album: 'Live Stream',
-      duration: 0,
-      started_at: Math.floor(Date.now() / 1000),
-      cover: '',
-    });
+    return res.status(502).json({ error: 'Now playing unavailable' });
   }
 });
 
 // Wildcard proxy route for HLS playlists and segments (/api/radio/hls/* -> https://numo.pp.ua/hls/*)
-app.get('/api/radio/hls/*', (req, res) => {
-  const fileSubPath = req.params[0] || 'live.m3u8';
+// Express 4 & Express 5 compatible parameter extraction with path validation and status forwarding
+app.get(['/api/radio/hls/*', '/api/radio/hls/*splat'], (req, res) => {
+  const rawParam = (req.params as any)[0] || (req.params as any).splat || (req.params as any)['*'];
+  const fileSubPath = Array.isArray(rawParam) ? rawParam.join('/') : (rawParam || 'live.m3u8');
+
+  // Security check: strictly allow valid filename extensions and reject path traversal (e.g. ..)
+  if (!/^[\w.-]+\.(m3u8|mp3|aac|ts)$/i.test(fileSubPath)) {
+    return res.status(400).send('Bad path');
+  }
+
   const targetUrl = `${NUMO_BASE}/hls/${fileSubPath}`;
 
   req.socket.setTimeout(0);
   res.socket?.setTimeout(0);
 
   const streamReq = https.get(targetUrl, (streamRes) => {
+    res.status(streamRes.statusCode || 502);
+
     const contentType = streamRes.headers['content-type'] ||
       (fileSubPath.endsWith('.m3u8')
         ? 'application/vnd.apple.mpegurl'
@@ -105,6 +108,7 @@ app.get('/api/radio/stream', (req, res) => {
   res.socket?.setTimeout(0);
 
   const streamReq = https.get(streamUrl, (streamRes) => {
+    res.status(streamRes.statusCode || 502);
     res.setHeader('Content-Type', streamRes.headers['content-type'] || 'audio/mpeg');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -134,16 +138,21 @@ app.get('/api/radio/stream', (req, res) => {
   });
 });
 
-// Proxy for album art image (strict HTTPS allowlist)
+// Proxy for album art image (strict Origin validation)
 app.get('/api/radio/art', async (req, res) => {
   const artUrl = req.query.url as string;
   if (!artUrl || typeof artUrl !== 'string') {
     return res.status(400).send('Missing url parameter');
   }
 
-  // Security check: only allow proxying from strict HTTPS station server
-  if (!artUrl.startsWith(NUMO_BASE) && !artUrl.startsWith('https://numo.pp.ua')) {
-    return res.status(403).send('Forbidden art source');
+  // Security check: validate exact origin to prevent bypasses like numo.pp.ua.evil.com
+  try {
+    const parsedUrl = new URL(artUrl);
+    if (parsedUrl.origin !== new URL(NUMO_BASE).origin) {
+      return res.status(403).send('Forbidden art source');
+    }
+  } catch {
+    return res.status(400).send('Invalid url parameter');
   }
 
   try {
